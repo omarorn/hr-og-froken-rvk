@@ -4,6 +4,11 @@ import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
 import AssistantProfile from './AssistantProfile';
 import { toast } from 'sonner';
+import { Settings, Volume2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import ApiKeyModal from './ApiKeyModal';
+import { getTextToSpeech } from '@/services/openAiService';
+import VoiceVisualizer from './VoiceVisualizer';
 
 interface Message {
   text: string;
@@ -23,8 +28,20 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
+  // Initialize audio element
+  useEffect(() => {
+    audioRef.current = new Audio();
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
   // Initial greeting when component mounts
   useEffect(() => {
     const initialGreeting = gender === 'female' 
@@ -33,14 +50,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     
     // Add initial message with slight delay to create a natural feel
     setTimeout(() => {
-      setMessages([{
+      const newMessage = {
         text: initialGreeting,
         isUser: false,
         id: Date.now()
-      }]);
-      // Simulate speaking
-      setIsSpeaking(true);
-      setTimeout(() => setIsSpeaking(false), 3000);
+      };
+      
+      setMessages([newMessage]);
+      
+      // Try to speak the greeting
+      speakMessage(newMessage);
     }, 1000);
   }, [gender]);
 
@@ -48,6 +67,52 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const speakMessage = async (message: Message) => {
+    if (message.isUser || !localStorage.getItem('openai_api_key')) return;
+    
+    try {
+      setIsSpeaking(true);
+      
+      // Select voice based on gender
+      const voice = gender === 'female' ? 'nova' : 'echo';
+      
+      // Instructions for Icelandic pronunciation
+      const instructions = "The voice should speak with a clear Icelandic accent and pronounce Icelandic characters like þ, ð, æ, etc. correctly. The tone should be warm and helpful, like a friendly customer service representative.";
+      
+      const audioData = await getTextToSpeech(message.text, voice, instructions);
+      const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        
+        audioRef.current.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        audioRef.current.play().catch(error => {
+          console.error('Audio playback error:', error);
+          setIsSpeaking(false);
+        });
+      }
+    } catch (error) {
+      console.error('Failed to speak message:', error);
+      setIsSpeaking(false);
+      
+      if ((error as Error).message.includes('API key')) {
+        toast.error('Þú þarft að setja inn OpenAI API lykil', {
+          action: {
+            label: 'Setja',
+            onClick: () => setIsApiKeyModalOpen(true)
+          }
+        });
+      } else {
+        toast.error('Villa við afspilun á rödd. Reyndu aftur.');
+      }
+    }
+  };
 
   const toggleListening = () => {
     if (!isListening) {
@@ -85,12 +150,13 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     const randomMessage = userMessageOptions[Math.floor(Math.random() * userMessageOptions.length)];
     
     // Add user message
-    setMessages(prev => [...prev, {
+    const userMessage = {
       text: randomMessage,
       isUser: true,
       id: Date.now()
-    }]);
+    };
     
+    setMessages(prev => [...prev, userMessage]);
     setIsListening(false);
     
     // Simulate the assistant thinking
@@ -114,19 +180,18 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         response = "Takk fyrir fyrirspurnina. Ég get veitt þér upplýsingar um margvíslega þjónustu Reykjavíkurborgar, svo sem leikskóla, grunnskóla, íþróttir og tómstundir, skipulagsmál, sorphirðu, og margt fleira. Hvernig get ég aðstoðað þig nánar?";
       }
       
-      // Add assistant response
+      // Add assistant response with slight delay
       setTimeout(() => {
-        setMessages(prev => [...prev, {
+        const assistantMessage = {
           text: response,
           isUser: false,
           id: Date.now()
-        }]);
+        };
         
-        // Stop speaking after a realistic time based on message length
-        const speakingTime = Math.min(8000, response.length * 50);
-        setTimeout(() => {
-          setIsSpeaking(false);
-        }, speakingTime);
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Speak the response
+        speakMessage(assistantMessage);
       }, 1500);
     }, 1000);
   };
@@ -134,12 +199,20 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   return (
     <div className="voice-assistant-container min-h-screen flex flex-col items-center p-4 md:p-8">
       <div className="w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-iceland-blue/20">
-        <div className="p-6 border-b border-iceland-blue/10">
+        <div className="p-6 border-b border-iceland-blue/10 flex justify-between items-center">
           <AssistantProfile 
             name={assistantName} 
             isActive={isSpeaking}
             gender={gender}
           />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsApiKeyModalOpen(true)}
+            title="Stillingar"
+          >
+            <Settings className="h-5 w-5 text-iceland-darkGray" />
+          </Button>
         </div>
         
         <div className="h-96 md:h-[420px] overflow-y-auto p-6 space-y-4 bg-iceland-gray/30">
@@ -154,10 +227,17 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         </div>
         
         <div className="p-6 border-t border-iceland-blue/10 flex justify-center">
-          <VoiceButton 
-            isListening={isListening} 
-            onClick={toggleListening} 
-          />
+          <div className="flex items-center">
+            {isSpeaking && (
+              <div className="mr-4">
+                <VoiceVisualizer isActive={isSpeaking} />
+              </div>
+            )}
+            <VoiceButton 
+              isListening={isListening} 
+              onClick={toggleListening} 
+            />
+          </div>
         </div>
       </div>
       
@@ -165,6 +245,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         <p>Reykjavíkurborg Digital Assistant</p>
         <p className="mt-1">&copy; {new Date().getFullYear()} Reykjavíkurborg - Öll réttindi áskilin</p>
       </div>
+      
+      <ApiKeyModal 
+        isOpen={isApiKeyModalOpen} 
+        onClose={() => setIsApiKeyModalOpen(false)} 
+      />
     </div>
   );
 };

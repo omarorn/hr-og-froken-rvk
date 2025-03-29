@@ -4,6 +4,7 @@ import VoiceAssistant from '@/components/VoiceAssistant';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
