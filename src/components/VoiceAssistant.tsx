@@ -4,10 +4,10 @@ import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
 import AssistantProfile from './AssistantProfile';
 import { toast } from 'sonner';
-import { Settings, Volume2 } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ApiKeyModal from './ApiKeyModal';
-import { getTextToSpeech } from '@/services/openAiService';
+import { getTextToSpeech, transcribeAudio } from '@/services/openAiService';
 import VoiceVisualizer from './VoiceVisualizer';
 
 interface Message {
@@ -26,11 +26,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   gender = 'female' 
 }) => {
   const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   
   // Initialize audio element
   useEffect(() => {
@@ -114,22 +117,83 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
-  const toggleListening = () => {
-    if (!isListening) {
-      // Starting to listen
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        try {
+          setIsProcessing(true);
+          
+          // Transcribe the audio
+          const transcribedText = await transcribeAudio(audioBlob);
+          
+          if (transcribedText.trim()) {
+            // Add user message
+            const userMessage = {
+              text: transcribedText,
+              isUser: true,
+              id: Date.now()
+            };
+            
+            setMessages(prev => [...prev, userMessage]);
+            handleUserResponse(transcribedText);
+          } else {
+            toast.info('Ekkert tal greindist. Reyndu aftur.', { 
+              position: 'top-center',
+              duration: 2000
+            });
+            setIsProcessing(false);
+          }
+        } catch (error) {
+          console.error('Error processing audio:', error);
+          toast.error('Villa við vinnslu hljóðupptöku. Reyndu aftur.');
+          setIsProcessing(false);
+          
+          if ((error as Error).message.includes('API key')) {
+            toast.error('Þú þarft að setja inn OpenAI API lykil', {
+              action: {
+                label: 'Setja',
+                onClick: () => setIsApiKeyModalOpen(true)
+              }
+            });
+          }
+        }
+        
+        // Stop all tracks in the stream
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.start();
       setIsListening(true);
+      
       toast.info('Ég er að hlusta...', { 
         position: 'top-center',
         duration: 2000
       });
-      
-      // Simulate getting user input after 3 seconds
-      setTimeout(() => {
-        handleUserMessage();
-      }, 3000);
-    } else {
-      // Stopping listening
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error('Ekki tókst að hefja upptöku. Athugaðu að vefurinn hafi aðgang að hljóðnema.');
+    }
+  };
+  
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
       setIsListening(false);
+      
       toast.info('Hætt að hlusta', { 
         position: 'top-center', 
         duration: 2000 
@@ -137,62 +201,45 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
-  const handleUserMessage = () => {
-    // Simulate user message (in real app would come from speech recognition)
-    const userMessageOptions = [
-      "Hvernig sæki ég um leikskólapláss?",
-      "Hvar get ég fundið upplýsingar um sorpflokkun?",
-      "Hvenær er næsti fundur borgarstjórnar?",
-      "Hvar get ég greitt fasteignagjöld?",
-      "Hverjir eru opnunartímar sundlauga í Reykjavík?"
-    ];
-    
-    const randomMessage = userMessageOptions[Math.floor(Math.random() * userMessageOptions.length)];
-    
-    // Add user message
-    const userMessage = {
-      text: randomMessage,
-      isUser: true,
-      id: Date.now()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setIsListening(false);
-    
-    // Simulate the assistant thinking
+  const toggleListening = () => {
+    if (!isListening && !isProcessing) {
+      startRecording();
+    } else if (isListening) {
+      stopRecording();
+    }
+  };
+
+  const handleUserResponse = (userQuestion: string) => {
     setTimeout(() => {
-      setIsSpeaking(true);
-      
-      // Respond based on the user's question
+      // Generate response based on the user's question
       let response = "";
       
-      if (randomMessage.includes("leikskólapláss")) {
+      if (userQuestion.toLowerCase().includes("leikskóla")) {
         response = "Þú getur sótt um leikskólapláss á vef Reykjavíkurborgar. Farðu á reykjavik.is og undir 'Þjónusta' finnur þú 'Skólar og frístund' þar sem þú getur sótt um leikskólapláss. Þú þarft að vera með rafræn skilríki eða Íslykil til að skrá þig inn. Get ég aðstoðað þig með eitthvað annað?";
-      } else if (randomMessage.includes("sorpflokkun")) {
+      } else if (userQuestion.toLowerCase().includes("sorp")) {
         response = "Upplýsingar um sorpflokkun eru á vef Reykjavíkurborgar undir 'Þjónusta' og þá 'Sorphirða og flokkun'. Þar finnur þú ítarlegar leiðbeiningar um flokkun og losunarstaði. Einnig er hægt að sækja appið Borgin mín Reykjavík þar sem þú getur fengið upplýsingar um sorphirðudaga í þínu hverfi. Er eitthvað annað sem ég get hjálpað þér með?";
-      } else if (randomMessage.includes("borgarstjórnar")) {
+      } else if (userQuestion.toLowerCase().includes("borgarstjór")) {
         response = "Næsti fundur borgarstjórnar er á þriðjudaginn næsta klukkan 14:00 í Ráðhúsi Reykjavíkur. Þú getur fylgst með fundinum í beinni útsendingu á vef Reykjavíkurborgar. Fundarboð og dagskrá er einnig hægt að nálgast á vefnum undir 'Stjórnkerfi' og 'Fundir og fundargerðir'. Get ég veitt þér frekari upplýsingar?";
-      } else if (randomMessage.includes("fasteignagjöld")) {
+      } else if (userQuestion.toLowerCase().includes("fasteignagjöld")) {
         response = "Þú getur greitt fasteignagjöld á vef Reykjavíkurborgar. Farðu á reykjavik.is og undir 'Þjónusta' finnur þú 'Fjármál og gjöld' þar sem þú getur greitt fasteignagjöld með rafrænum hætti. Þú þarft að vera með rafræn skilríki eða Íslykil til að skrá þig inn. Einnig er hægt að greiða í heimabanka eða í afgreiðslu Þjónustuvers Reykjavíkurborgar. Er eitthvað fleira sem ég get hjálpað þér með?";
-      } else if (randomMessage.includes("sundlauga")) {
+      } else if (userQuestion.toLowerCase().includes("sundlaug")) {
         response = "Opnunartímar sundlauga í Reykjavík eru mismunandi eftir sundlaugum og árstíðum. Almennt eru sundlaugar opnar frá kl. 6:30 til 22:00 virka daga og frá 8:00 til 20:00 um helgar. Þú getur séð nákvæma opnunartíma hverrar sundlaugar á vef Reykjavíkurborgar undir 'Íþróttir og útivist' og svo 'Sundlaugar'. Þar finnur þú einnig upplýsingar um aðgangsverð og aðstöðu. Get ég aðstoðað þig með eitthvað annað?";
       } else {
         response = "Takk fyrir fyrirspurnina. Ég get veitt þér upplýsingar um margvíslega þjónustu Reykjavíkurborgar, svo sem leikskóla, grunnskóla, íþróttir og tómstundir, skipulagsmál, sorphirðu, og margt fleira. Hvernig get ég aðstoðað þig nánar?";
       }
       
-      // Add assistant response with slight delay
-      setTimeout(() => {
-        const assistantMessage = {
-          text: response,
-          isUser: false,
-          id: Date.now()
-        };
-        
-        setMessages(prev => [...prev, assistantMessage]);
-        
-        // Speak the response
-        speakMessage(assistantMessage);
-      }, 1500);
+      // Add assistant response
+      const assistantMessage = {
+        text: response,
+        isUser: false,
+        id: Date.now()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsProcessing(false);
+      
+      // Speak the response
+      speakMessage(assistantMessage);
     }, 1000);
   };
 
@@ -235,6 +282,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             )}
             <VoiceButton 
               isListening={isListening} 
+              isProcessing={isProcessing}
               onClick={toggleListening} 
             />
           </div>

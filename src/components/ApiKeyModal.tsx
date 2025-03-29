@@ -49,6 +49,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => {
             />
             <p className="text-sm text-gray-500">
               API lykill þinn er geymdur staðbundið í vafranum þínum og sendur eingöngu á OpenAI vefþjónustu.
+              Hann er notaður fyrir bæði talgreiningu og raddgerð.
             </p>
           </div>
         </div>
