@@ -1,24 +1,23 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 const getTextToSpeech = async (text: string, voice: string = 'alloy', instructions?: string): Promise<ArrayBuffer> => {
   try {
-    const response = await fetch('/api/speech', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    // Use Supabase Edge Function instead of direct API
+    const { data, error } = await supabase.functions.invoke('speech', {
+      body: {
         text,
         voice,
         instructions: instructions || undefined
-      })
+      },
+      responseType: 'arraybuffer'
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Text-to-speech error: ${errorData.error || response.statusText}`);
+    if (error) {
+      throw new Error(`Text-to-speech error: ${error.message}`);
     }
 
-    return await response.arrayBuffer();
+    return data as unknown as ArrayBuffer;
   } catch (error) {
     console.error('Text-to-speech error:', error);
     throw error;
@@ -31,17 +30,15 @@ const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     formData.append('file', audioBlob, 'recording.webm');
     formData.append('language', 'is');
     
-    const response = await fetch('/api/transcribe', {
-      method: 'POST',
+    // Use Supabase Edge Function instead of direct API
+    const { data, error } = await supabase.functions.invoke('transcribe', {
       body: formData
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Transcription error: ${errorData.error || response.statusText}`);
+    if (error) {
+      throw new Error(`Transcription error: ${error.message}`);
     }
 
-    const data = await response.json();
     return data.text;
   } catch (error) {
     console.error('Audio transcription error:', error);

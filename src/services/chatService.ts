@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 /**
  * Service for handling chat-based interactions with OpenAI
  */
@@ -55,26 +57,19 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
       }
     ];
     
-    // Use edge function API endpoint URL
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    // Use Supabase Edge Function instead of direct API
+    const { data, error } = await supabase.functions.invoke('chat', {
+      body: {
         messages,
         model: 'gpt-4o-mini',
         temperature: 0.7,
         max_tokens: 500
-      })
+      }
     });
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`OpenAI API error: ${errorData.error || response.statusText}`);
+    if (error) {
+      throw new Error(`OpenAI API error: ${error.message}`);
     }
-    
-    const data = await response.json();
     
     return {
       text: data.content

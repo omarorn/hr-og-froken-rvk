@@ -1,1 +1,11 @@
+
 project_id = "xzmzfdoctqegsvppyaxg"
+
+[functions.speech]
+verify_jwt = false
+
+[functions.transcribe]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
