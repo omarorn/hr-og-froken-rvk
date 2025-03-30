@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
@@ -8,12 +7,14 @@ import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ApiKeyModal from './ApiKeyModal';
 import { getTextToSpeech, transcribeAudio } from '@/services/openAiService';
+import { sendChatMessage } from '@/services/chatService';
 import VoiceVisualizer from './VoiceVisualizer';
 
 interface Message {
   text: string;
   isUser: boolean;
   id: number;
+  gender?: 'female' | 'male';
 }
 
 interface VoiceAssistantProps {
@@ -56,7 +57,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       const newMessage = {
         text: initialGreeting,
         isUser: false,
-        id: Date.now()
+        id: Date.now(),
+        gender
       };
       
       setMessages([newMessage]);
@@ -209,28 +211,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
-  const handleUserResponse = (userQuestion: string) => {
-    setTimeout(() => {
-      // Generate response based on the user's question
-      let response = "";
+  const handleUserResponse = async (userQuestion: string) => {
+    try {
+      // Get conversation history to provide context to the AI
+      const conversationHistory = messages.map(msg => ({
+        text: msg.text,
+        isUser: msg.isUser,
+        gender: gender
+      }));
       
-      if (userQuestion.toLowerCase().includes("leikskóla")) {
-        response = "Þú getur sótt um leikskólapláss á vef Reykjavíkurborgar. Farðu á reykjavik.is og undir 'Þjónusta' finnur þú 'Skólar og frístund' þar sem þú getur sótt um leikskólapláss. Þú þarft að vera með rafræn skilríki eða Íslykil til að skrá þig inn. Get ég aðstoðað þig með eitthvað annað?";
-      } else if (userQuestion.toLowerCase().includes("sorp")) {
-        response = "Upplýsingar um sorpflokkun eru á vef Reykjavíkurborgar undir 'Þjónusta' og þá 'Sorphirða og flokkun'. Þar finnur þú ítarlegar leiðbeiningar um flokkun og losunarstaði. Einnig er hægt að sækja appið Borgin mín Reykjavík þar sem þú getur fengið upplýsingar um sorphirðudaga í þínu hverfi. Er eitthvað annað sem ég get hjálpað þér með?";
-      } else if (userQuestion.toLowerCase().includes("borgarstjór")) {
-        response = "Næsti fundur borgarstjórnar er á þriðjudaginn næsta klukkan 14:00 í Ráðhúsi Reykjavíkur. Þú getur fylgst með fundinum í beinni útsendingu á vef Reykjavíkurborgar. Fundarboð og dagskrá er einnig hægt að nálgast á vefnum undir 'Stjórnkerfi' og 'Fundir og fundargerðir'. Get ég veitt þér frekari upplýsingar?";
-      } else if (userQuestion.toLowerCase().includes("fasteignagjöld")) {
-        response = "Þú getur greitt fasteignagjöld á vef Reykjavíkurborgar. Farðu á reykjavik.is og undir 'Þjónusta' finnur þú 'Fjármál og gjöld' þar sem þú getur greitt fasteignagjöld með rafrænum hætti. Þú þarft að vera með rafræn skilríki eða Íslykil til að skrá þig inn. Einnig er hægt að greiða í heimabanka eða í afgreiðslu Þjónustuvers Reykjavíkurborgar. Er eitthvað fleira sem ég get hjálpað þér með?";
-      } else if (userQuestion.toLowerCase().includes("sundlaug")) {
-        response = "Opnunartímar sundlauga í Reykjavík eru mismunandi eftir sundlaugum og árstíðum. Almennt eru sundlaugar opnar frá kl. 6:30 til 22:00 virka daga og frá 8:00 til 20:00 um helgar. Þú getur séð nákvæma opnunartíma hverrar sundlaugar á vef Reykjavíkurborgar undir 'Íþróttir og útivist' og svo 'Sundlaugar'. Þar finnur þú einnig upplýsingar um aðgangsverð og aðstöðu. Get ég aðstoðað þig með eitthvað annað?";
-      } else {
-        response = "Takk fyrir fyrirspurnina. Ég get veitt þér upplýsingar um margvíslega þjónustu Reykjavíkurborgar, svo sem leikskóla, grunnskóla, íþróttir og tómstundir, skipulagsmál, sorphirðu, og margt fleira. Hvernig get ég aðstoðað þig nánar?";
-      }
+      // Send the message to OpenAI
+      const response = await sendChatMessage(userQuestion, conversationHistory);
       
       // Add assistant response
       const assistantMessage = {
-        text: response,
+        text: response.text,
         isUser: false,
         id: Date.now()
       };
@@ -240,7 +235,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       
       // Speak the response
       speakMessage(assistantMessage);
-    }, 1000);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      setIsProcessing(false);
+      
+      toast.error('Villa við að sækja svar. Reyndu aftur.');
+      
+      if ((error as Error).message.includes('API key')) {
+        toast.error('Þú þarft að setja inn OpenAI API lykil', {
+          action: {
+            label: 'Setja',
+            onClick: () => setIsApiKeyModalOpen(true)
+          }
+        });
+      }
+    }
   };
 
   return (
