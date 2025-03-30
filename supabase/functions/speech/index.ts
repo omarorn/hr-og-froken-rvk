@@ -56,12 +56,14 @@ serve(async (req) => {
     }
 
     const audioBuffer = await response.arrayBuffer();
+    const base64Audio = btoa(
+      String.fromCharCode(...new Uint8Array(audioBuffer))
+    );
     
-    return new Response(audioBuffer, { 
-      headers: { 
-        ...corsHeaders,
-        'Content-Type': 'audio/mpeg' 
-      } 
+    return new Response(JSON.stringify({ 
+      audioContent: base64Audio 
+    }), { 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
   } catch (error) {
     console.error('Error in speech endpoint:', error);
