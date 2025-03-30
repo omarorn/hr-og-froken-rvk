@@ -1,11 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
 import AssistantProfile from './AssistantProfile';
 import { toast } from 'sonner';
-import { Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import ApiKeyModal from './ApiKeyModal';
 import { getTextToSpeech, transcribeAudio } from '@/services/openAiService';
 import { sendChatMessage } from '@/services/chatService';
 import VoiceVisualizer from './VoiceVisualizer';
@@ -30,7 +28,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -74,7 +71,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   }, [messages]);
 
   const speakMessage = async (message: Message) => {
-    if (message.isUser || !localStorage.getItem('openai_api_key')) return;
+    if (message.isUser) return;
     
     try {
       setIsSpeaking(true);
@@ -105,17 +102,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     } catch (error) {
       console.error('Failed to speak message:', error);
       setIsSpeaking(false);
-      
-      if ((error as Error).message.includes('API key')) {
-        toast.error('Þú þarft að setja inn OpenAI API lykil', {
-          action: {
-            label: 'Setja',
-            onClick: () => setIsApiKeyModalOpen(true)
-          }
-        });
-      } else {
-        toast.error('Villa við afspilun á rödd. Reyndu aftur.');
-      }
+      toast.error('Villa við afspilun á rödd. Reyndu aftur.');
     }
   };
 
@@ -163,15 +150,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           console.error('Error processing audio:', error);
           toast.error('Villa við vinnslu hljóðupptöku. Reyndu aftur.');
           setIsProcessing(false);
-          
-          if ((error as Error).message.includes('API key')) {
-            toast.error('Þú þarft að setja inn OpenAI API lykil', {
-              action: {
-                label: 'Setja',
-                onClick: () => setIsApiKeyModalOpen(true)
-              }
-            });
-          }
         }
         
         // Stop all tracks in the stream
@@ -238,17 +216,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     } catch (error) {
       console.error('Error getting AI response:', error);
       setIsProcessing(false);
-      
       toast.error('Villa við að sækja svar. Reyndu aftur.');
-      
-      if ((error as Error).message.includes('API key')) {
-        toast.error('Þú þarft að setja inn OpenAI API lykil', {
-          action: {
-            label: 'Setja',
-            onClick: () => setIsApiKeyModalOpen(true)
-          }
-        });
-      }
     }
   };
 
@@ -261,14 +229,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             isActive={isSpeaking}
             gender={gender}
           />
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setIsApiKeyModalOpen(true)}
-            title="Stillingar"
-          >
-            <Settings className="h-5 w-5 text-iceland-darkGray" />
-          </Button>
         </div>
         
         <div className="h-96 md:h-[420px] overflow-y-auto p-6 space-y-4 bg-iceland-gray/30">
@@ -302,11 +262,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         <p>Reykjavíkurborg Digital Assistant</p>
         <p className="mt-1">&copy; {new Date().getFullYear()} Reykjavíkurborg - Öll réttindi áskilin</p>
       </div>
-      
-      <ApiKeyModal 
-        isOpen={isApiKeyModalOpen} 
-        onClose={() => setIsApiKeyModalOpen(false)} 
-      />
     </div>
   );
 };

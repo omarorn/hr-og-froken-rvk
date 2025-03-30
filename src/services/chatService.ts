@@ -20,12 +20,6 @@ interface ChatResponse {
  */
 export const sendChatMessage = async (message: string, history: any[] = []): Promise<ChatResponse> => {
   try {
-    const openAiKey = localStorage.getItem('openai_api_key');
-    
-    if (!openAiKey) {
-      throw new Error('OpenAI API key not found. Please set your API key in settings.');
-    }
-    
     const systemPrompt = `
       You are a helpful assistant for Reykjavíkurborg (Reykjavik City) named ${history.length > 0 && history[0].gender === 'male' ? 'Birkir' : 'Rósa'}.
       Respond to questions about city services, facilities, and local information.
@@ -61,15 +55,15 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
       }
     ];
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Use edge function API endpoint URL
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
         messages,
+        model: 'gpt-4o-mini',
         temperature: 0.7,
         max_tokens: 500
       })
@@ -77,13 +71,13 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+      throw new Error(`OpenAI API error: ${errorData.error || response.statusText}`);
     }
     
     const data = await response.json();
     
     return {
-      text: data.choices[0].message.content
+      text: data.content
     };
   } catch (error) {
     console.error('Chat service error:', error);
