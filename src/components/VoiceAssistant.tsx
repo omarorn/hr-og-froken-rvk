@@ -123,15 +123,19 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        console.log('Recording stopped, audio blob size:', audioBlob.size);
         
         try {
           setIsProcessing(true);
           
           // Transcribe the audio
           const transcribedText = await transcribeAudio(audioBlob);
-          setTranscribedText(transcribedText); // Save the transcribed text
+          console.log('Transcribed text:', transcribedText);
           
-          if (transcribedText.trim()) {
+          // Save the transcribed text
+          setTranscribedText(transcribedText);
+          
+          if (transcribedText && transcribedText.trim()) {
             // Add user message
             const userMessage = {
               text: transcribedText,
@@ -142,6 +146,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             setMessages(prev => [...prev, userMessage]);
             handleUserResponse(transcribedText);
           } else {
+            console.error('Empty transcription result');
             toast.info('Ekkert tal greindist. Reyndu aftur.', { 
               position: 'top-center',
               duration: 2000
@@ -173,6 +178,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      console.log('Stopping recording...');
       mediaRecorderRef.current.stop();
       setIsListening(false);
       
@@ -200,8 +206,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         gender: gender
       }));
       
+      console.log('Sending user question to AI:', userQuestion);
+      
       // Send the message to OpenAI
       const response = await sendChatMessage(userQuestion, conversationHistory);
+      console.log('AI response:', response.text);
       
       // Add assistant response
       const assistantMessage = {

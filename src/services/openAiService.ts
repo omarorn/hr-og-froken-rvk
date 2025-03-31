@@ -45,6 +45,8 @@ const getTextToSpeech = async (text: string, voice: string = 'alloy', instructio
 
 const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
   try {
+    console.log('Starting audio transcription for blob size:', audioBlob.size);
+    
     // Convert blob to base64
     const arrayBuffer = await audioBlob.arrayBuffer();
     
@@ -61,6 +63,7 @@ const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     }
     
     const base64String = btoa(binary);
+    console.log('Converted audio to base64, length:', base64String.length);
     
     // Use Supabase Edge Function instead of direct API
     const { data, error } = await supabase.functions.invoke('transcribe', {
@@ -71,9 +74,16 @@ const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     });
 
     if (error) {
+      console.error('Transcription function error:', error);
       throw new Error(`Transcription error: ${error.message}`);
     }
 
+    if (!data || !data.text) {
+      console.error('No transcription data returned:', data);
+      throw new Error('No transcription data returned');
+    }
+
+    console.log('Transcription successful:', data.text);
     return data.text;
   } catch (error) {
     console.error('Audio transcription error:', error);

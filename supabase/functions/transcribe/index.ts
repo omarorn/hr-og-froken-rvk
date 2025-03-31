@@ -67,6 +67,7 @@ serve(async (req) => {
     formData.append('file', blob, 'audio.webm');
     formData.append('model', 'whisper-1');
     formData.append('language', language || 'is');
+    formData.append('response_format', 'json');
 
     // Send to OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -90,6 +91,7 @@ serve(async (req) => {
     }
 
     const result = await response.json();
+    console.log('Transcription result:', result.text);
 
     return new Response(
       JSON.stringify({ text: result.text }),

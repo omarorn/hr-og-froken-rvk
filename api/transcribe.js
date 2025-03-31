@@ -17,6 +17,8 @@ export default async function handler(req, res) {
     formData.append('language', language);
     formData.append('response_format', 'json');
 
+    console.log('Processing transcription request', { language });
+
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -27,12 +29,14 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('OpenAI API error:', errorData);
       return res.status(response.status).json({ 
         error: errorData.error?.message || response.statusText 
       });
     }
 
     const data = await response.json();
+    console.log('Transcription result:', data.text);
     
     return res.status(200).json({
       text: data.text
