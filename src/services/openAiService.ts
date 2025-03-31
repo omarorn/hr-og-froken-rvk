@@ -20,13 +20,20 @@ const getTextToSpeech = async (text: string, voice: string = 'alloy', instructio
       throw new Error('No audio data returned from speech service');
     }
 
-    // Convert the response data to ArrayBuffer
+    // Convert the response data to ArrayBuffer safely
     const base64Data = data as string;
+    
+    // Safely decode base64 to avoid stack issues
     const binaryString = atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
     
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    // Process in smaller chunks to avoid stack issues
+    const chunkSize = 1024;
+    for (let i = 0; i < binaryString.length; i += chunkSize) {
+      const end = Math.min(i + chunkSize, binaryString.length);
+      for (let j = i; j < end; j++) {
+        bytes[j] = binaryString.charCodeAt(j);
+      }
     }
     
     return bytes.buffer;
@@ -40,10 +47,20 @@ const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
   try {
     // Convert blob to base64
     const arrayBuffer = await audioBlob.arrayBuffer();
-    const base64String = btoa(
-      new Uint8Array(arrayBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    
+    // Convert to base64 safely in chunks
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const chunkSize = 1024;
+    let binary = '';
+    
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
+      for (let j = 0; j < chunk.length; j++) {
+        binary += String.fromCharCode(chunk[j]);
+      }
+    }
+    
+    const base64String = btoa(binary);
     
     // Use Supabase Edge Function instead of direct API
     const { data, error } = await supabase.functions.invoke('transcribe', {

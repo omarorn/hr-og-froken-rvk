@@ -61,10 +61,31 @@ serve(async (req) => {
       });
     }
 
+    // Get audio data as ArrayBuffer
     const audioBuffer = await response.arrayBuffer();
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioBuffer))
-    );
+    
+    // Convert to Base64 safely
+    // Use TextEncoder/TextDecoder to avoid stack issues with large audio files
+    const audioBytes = new Uint8Array(audioBuffer);
+    
+    // Create a safe base64 encoding function
+    const toBase64 = (buffer: ArrayBuffer): string => {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      const chunkSize = 1024;
+      
+      // Process in chunks to avoid call stack issues
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+        for (let j = 0; j < chunk.length; j++) {
+          binary += String.fromCharCode(chunk[j]);
+        }
+      }
+      
+      return btoa(binary);
+    };
+    
+    const base64Audio = toBase64(audioBuffer);
     
     return new Response(JSON.stringify(base64Audio), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
