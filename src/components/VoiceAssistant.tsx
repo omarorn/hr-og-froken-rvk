@@ -1,19 +1,12 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
 import AssistantProfile from './AssistantProfile';
-import { toast } from 'sonner';
-import { getTextToSpeech, transcribeAudio } from '@/services/openAiService';
-import { sendChatMessage } from '@/services/chatService';
 import VoiceVisualizer from './VoiceVisualizer';
-
-interface Message {
-  text: string;
-  isUser: boolean;
-  id: number;
-  gender?: 'female' | 'male';
-}
+import { useAudioRecording } from '@/hooks/useAudioRecording';
+import { useAudioPlayback } from '@/hooks/useAudioPlayback';
+import { useMessageService } from '@/services/messageService';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -24,25 +17,23 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   assistantName = 'Rósa', 
   gender = 'female' 
 }) => {
-  const [isListening, setIsListening] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [transcribedText, setTranscribedText] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const messageService = useMessageService(gender);
+  const { messages, isProcessing, setIsProcessing, handleUserMessage } = messageService;
   
-  // Initialize audio element
-  useEffect(() => {
-    audioRef.current = new Audio();
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    };
-  }, []);
+  const { isSpeaking, speakMessage } = useAudioPlayback();
+
+  const handleTranscriptionComplete = async (transcribedText: string) => {
+    const assistantMessage = await handleUserMessage(transcribedText);
+    if (assistantMessage) {
+      speakMessage(assistantMessage);
+    }
+  };
+
+  const { isListening, transcribedText, toggleRecording } = useAudioRecording({
+    onTranscriptionComplete: handleTranscriptionComplete,
+    onProcessingStateChange: setIsProcessing
+  });
 
   // Initial greeting when component mounts
   useEffect(() => {
@@ -52,17 +43,10 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     
     // Add initial message with slight delay to create a natural feel
     setTimeout(() => {
-      const newMessage = {
-        text: initialGreeting,
-        isUser: false,
-        id: Date.now(),
-        gender
-      };
-      
-      setMessages([newMessage]);
+      const greeting = messageService.setInitialGreeting(initialGreeting);
       
       // Try to speak the greeting
-      speakMessage(newMessage);
+      speakMessage(greeting);
     }, 1000);
   }, [gender]);
 
@@ -71,163 +55,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const speakMessage = async (message: Message) => {
-    if (message.isUser) return;
-    
-    try {
-      setIsSpeaking(true);
-      
-      // Select voice based on gender
-      const voice = gender === 'female' ? 'nova' : 'echo';
-      
-      // Instructions for Icelandic pronunciation
-      const instructions = "The voice should speak with a clear Icelandic accent and pronounce Icelandic characters like þ, ð, æ, etc. correctly. The tone should be warm and helpful, like a friendly customer service representative.";
-      
-      const audioData = await getTextToSpeech(message.text, voice, instructions);
-      const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl;
-        
-        audioRef.current.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        
-        audioRef.current.play().catch(error => {
-          console.error('Audio playback error:', error);
-          setIsSpeaking(false);
-        });
-      }
-    } catch (error) {
-      console.error('Failed to speak message:', error);
-      setIsSpeaking(false);
-      toast.error('Villa við afspilun á rödd. Reyndu aftur.');
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        console.log('Recording stopped, audio blob size:', audioBlob.size);
-        
-        try {
-          setIsProcessing(true);
-          
-          // Transcribe the audio
-          const transcribedText = await transcribeAudio(audioBlob);
-          console.log('Transcribed text:', transcribedText);
-          
-          // Save the transcribed text
-          setTranscribedText(transcribedText);
-          
-          if (transcribedText && transcribedText.trim()) {
-            // Add user message
-            const userMessage = {
-              text: transcribedText,
-              isUser: true,
-              id: Date.now()
-            };
-            
-            setMessages(prev => [...prev, userMessage]);
-            handleUserResponse(transcribedText);
-          } else {
-            console.error('Empty transcription result');
-            toast.info('Ekkert tal greindist. Reyndu aftur.', { 
-              position: 'top-center',
-              duration: 2000
-            });
-            setIsProcessing(false);
-          }
-        } catch (error) {
-          console.error('Error processing audio:', error);
-          toast.error('Villa við vinnslu hljóðupptöku. Reyndu aftur.');
-          setIsProcessing(false);
-        }
-        
-        // Stop all tracks in the stream
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      mediaRecorder.start();
-      setIsListening(true);
-      
-      toast.info('Ég er að hlusta...', { 
-        position: 'top-center',
-        duration: 2000
-      });
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      toast.error('Ekki tókst að hefja upptöku. Athugaðu að vefurinn hafi aðgang að hljóðnema.');
-    }
-  };
-  
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      console.log('Stopping recording...');
-      mediaRecorderRef.current.stop();
-      setIsListening(false);
-      
-      toast.info('Hætt að hlusta', { 
-        position: 'top-center', 
-        duration: 2000 
-      });
-    }
-  };
-
-  const toggleListening = () => {
+  const handleVoiceButtonClick = () => {
     if (!isListening && !isProcessing) {
-      startRecording();
+      toggleRecording();
     } else if (isListening) {
-      stopRecording();
-    }
-  };
-
-  const handleUserResponse = async (userQuestion: string) => {
-    try {
-      // Get conversation history to provide context to the AI
-      const conversationHistory = messages.map(msg => ({
-        text: msg.text,
-        isUser: msg.isUser,
-        gender: gender
-      }));
-      
-      console.log('Sending user question to AI:', userQuestion);
-      
-      // Send the message to OpenAI
-      const response = await sendChatMessage(userQuestion, conversationHistory);
-      console.log('AI response:', response.text);
-      
-      // Add assistant response
-      const assistantMessage = {
-        text: response.text,
-        isUser: false,
-        id: Date.now()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsProcessing(false);
-      
-      // Speak the response
-      speakMessage(assistantMessage);
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-      setIsProcessing(false);
-      toast.error('Villa við að sækja svar. Reyndu aftur.');
+      toggleRecording();
     }
   };
 
@@ -279,7 +111,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             <VoiceButton 
               isListening={isListening} 
               isProcessing={isProcessing}
-              onClick={toggleListening} 
+              onClick={handleVoiceButtonClick} 
             />
           </div>
         </div>
