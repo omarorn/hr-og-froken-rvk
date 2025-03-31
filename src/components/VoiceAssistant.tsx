@@ -1,5 +1,4 @@
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
 import AssistantProfile from './AssistantProfile';
@@ -20,10 +19,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageService = useMessageService(gender);
   const { messages, isProcessing, setIsProcessing, handleUserMessage } = messageService;
+  const [lastTranscribedText, setLastTranscribedText] = useState<string>('');
   
   const { isSpeaking, speakMessage } = useAudioPlayback();
 
   const handleTranscriptionComplete = async (transcribedText: string) => {
+    setLastTranscribedText(transcribedText);
+    
+    console.log('Transcription completed, sending to AI:', transcribedText);
     const assistantMessage = await handleUserMessage(transcribedText);
     if (assistantMessage) {
       speakMessage(assistantMessage);
@@ -35,22 +38,18 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     onProcessingStateChange: setIsProcessing
   });
 
-  // Initial greeting when component mounts
   useEffect(() => {
     const initialGreeting = gender === 'female' 
       ? "Góðan dag, ég heiti Rósa. Hvernig get ég aðstoðað þig í dag?"
       : "Góðan dag, ég heiti Birkir. Hvernig get ég aðstoðað þig í dag?";
     
-    // Add initial message with slight delay to create a natural feel
     setTimeout(() => {
       const greeting = messageService.setInitialGreeting(initialGreeting);
       
-      // Try to speak the greeting
       speakMessage(greeting);
     }, 1000);
   }, [gender]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -73,11 +72,10 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             gender={gender}
           />
           
-          {/* Transcription display */}
-          {transcribedText && (
+          {lastTranscribedText && (
             <div className="text-sm text-iceland-darkGray mt-2 flex items-center">
               <span className="font-medium mr-1">Uppritað:</span>
-              <div className="italic">{transcribedText}</div>
+              <div className="italic">{lastTranscribedText}</div>
             </div>
           )}
         </div>
@@ -94,11 +92,17 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         </div>
         
         <div className="p-6 border-t border-iceland-blue/10 flex flex-col items-center">
-          {/* Show transcribed text above the voice button */}
           {isProcessing && transcribedText && (
             <div className="mb-4 text-center">
               <div className="text-sm font-medium text-iceland-darkGray">Uppritaður texti:</div>
               <div className="text-iceland-darkBlue italic">{transcribedText}</div>
+            </div>
+          )}
+          
+          {!isProcessing && lastTranscribedText && (
+            <div className="mb-4 text-center">
+              <div className="text-sm font-medium text-iceland-darkGray">Síðasti uppritaði texti:</div>
+              <div className="text-iceland-darkBlue italic">{lastTranscribedText}</div>
             </div>
           )}
           

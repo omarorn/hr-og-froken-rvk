@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { sendChatMessage } from '@/services/chatService';
+import { toast } from 'sonner';
 
 export interface Message {
   text: string;

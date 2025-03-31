@@ -47,37 +47,27 @@ const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
   try {
     console.log('Starting audio transcription for blob size:', audioBlob.size);
     
-    // Convert blob to base64
-    const arrayBuffer = await audioBlob.arrayBuffer();
+    // Create a direct FormData to send to the API
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.webm');
+    formData.append('language', 'is');
     
-    // Convert to base64 safely in chunks
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const chunkSize = 1024;
-    let binary = '';
+    console.log('Sending audio data to transcribe API');
     
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
-      for (let j = 0; j < chunk.length; j++) {
-        binary += String.fromCharCode(chunk[j]);
-      }
-    }
-    
-    const base64String = btoa(binary);
-    console.log('Converted audio to base64, length:', base64String.length);
-    
-    // Use Supabase Edge Function instead of direct API
-    const { data, error } = await supabase.functions.invoke('transcribe', {
-      body: {
-        audio: base64String,
-        language: 'is'
-      }
+    // Send directly to our API endpoint
+    const response = await fetch('/api/transcribe', {
+      method: 'POST',
+      body: formData
     });
 
-    if (error) {
-      console.error('Transcription function error:', error);
-      throw new Error(`Transcription error: ${error.message}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Transcription API error:', errorData);
+      throw new Error(`Transcription error: ${errorData.error || response.statusText}`);
     }
 
+    const data = await response.json();
+    
     if (!data || !data.text) {
       console.error('No transcription data returned:', data);
       throw new Error('No transcription data returned');

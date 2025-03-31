@@ -6,18 +6,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const formData = new FormData();
-    
     // Get the file from the request
     const file = req.body.get('file');
+    
+    if (!file) {
+      console.error('No file received in request');
+      return res.status(400).json({ error: 'No file received' });
+    }
+    
     const language = req.body.get('language') || 'is';
     
+    console.log('Processing transcription request', { 
+      language, 
+      fileType: file.type,
+      fileSize: file.size 
+    });
+
+    const formData = new FormData();
     formData.append('file', file);
     formData.append('model', 'whisper-1');
     formData.append('language', language);
     formData.append('response_format', 'json');
-
-    console.log('Processing transcription request', { language });
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -42,7 +51,7 @@ export default async function handler(req, res) {
       text: data.text
     });
   } catch (error) {
-    console.error('Error in transcribe endpoint:', error);
+    console.error('Error in transcribe endpoint:', error.message, error.stack);
     return res.status(500).json({ error: 'Error processing request' });
   }
 }
