@@ -22,10 +22,16 @@ serve(async (req) => {
 
     console.log('Speech request:', { text, voice, instructions });
     
+    // Get API key from environment variable
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+    
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -60,9 +66,7 @@ serve(async (req) => {
       String.fromCharCode(...new Uint8Array(audioBuffer))
     );
     
-    return new Response(JSON.stringify({ 
-      audioContent: base64Audio 
-    }), { 
+    return new Response(JSON.stringify(base64Audio), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
   } catch (error) {

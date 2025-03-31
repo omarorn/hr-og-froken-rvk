@@ -52,6 +52,12 @@ serve(async (req) => {
 
     console.log('Transcribe request:', { language, audioSize: audio.length });
     
+    // Get API key from environment variable
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+    
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio);
     
@@ -66,7 +72,7 @@ serve(async (req) => {
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: formData,
     });

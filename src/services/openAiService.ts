@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 const getTextToSpeech = async (text: string, voice: string = 'alloy', instructions?: string): Promise<ArrayBuffer> => {
   try {
     // Use Supabase Edge Function instead of direct API
-    const response = await supabase.functions.invoke('speech', {
+    const { data, error } = await supabase.functions.invoke('speech', {
       body: {
         text,
         voice,
@@ -12,12 +12,16 @@ const getTextToSpeech = async (text: string, voice: string = 'alloy', instructio
       }
     });
 
-    if (response.error) {
-      throw new Error(`Text-to-speech error: ${response.error.message}`);
+    if (error) {
+      throw new Error(`Text-to-speech error: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No audio data returned from speech service');
     }
 
     // Convert the response data to ArrayBuffer
-    const base64Data = response.data as string;
+    const base64Data = data as string;
     const binaryString = atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
     
