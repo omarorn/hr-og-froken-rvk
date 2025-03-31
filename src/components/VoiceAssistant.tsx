@@ -28,6 +28,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [transcribedText, setTranscribedText] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -128,6 +129,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           
           // Transcribe the audio
           const transcribedText = await transcribeAudio(audioBlob);
+          setTranscribedText(transcribedText); // Save the transcribed text
           
           if (transcribedText.trim()) {
             // Add user message
@@ -229,6 +231,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             isActive={isSpeaking}
             gender={gender}
           />
+          
+          {/* Transcription display */}
+          {transcribedText && (
+            <div className="text-sm text-iceland-darkGray mt-2 flex items-center">
+              <span className="font-medium mr-1">Uppritað:</span>
+              <div className="italic">{transcribedText}</div>
+            </div>
+          )}
         </div>
         
         <div className="h-96 md:h-[420px] overflow-y-auto p-6 space-y-4 bg-iceland-gray/30">
@@ -242,7 +252,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           <div ref={messagesEndRef} />
         </div>
         
-        <div className="p-6 border-t border-iceland-blue/10 flex justify-center">
+        <div className="p-6 border-t border-iceland-blue/10 flex flex-col items-center">
+          {/* Show transcribed text above the voice button */}
+          {isProcessing && transcribedText && (
+            <div className="mb-4 text-center">
+              <div className="text-sm font-medium text-iceland-darkGray">Uppritaður texti:</div>
+              <div className="text-iceland-darkBlue italic">{transcribedText}</div>
+            </div>
+          )}
+          
           <div className="flex items-center">
             {isSpeaking && (
               <div className="mr-4">

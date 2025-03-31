@@ -22,11 +22,19 @@ interface ChatResponse {
  */
 export const sendChatMessage = async (message: string, history: any[] = []): Promise<ChatResponse> => {
   try {
+    // Determine assistant name based on gender in history
+    const gender = history.length > 0 && history[0].gender === 'male' ? 'male' : 'female';
+    const assistantName = gender === 'male' ? 'Birkir' : 'Rósa';
+    
     const systemPrompt = `
-      You are a helpful assistant for Reykjavíkurborg (Reykjavik City) named ${history.length > 0 && history[0].gender === 'male' ? 'Birkir' : 'Rósa'}.
+      You are a helpful assistant for Reykjavíkurborg (Reykjavik City) named ${assistantName}.
       Respond to questions about city services, facilities, and local information.
       Be friendly, helpful, and concise.
       Always respond in Icelandic.
+      
+      IMPORTANT: Always respond directly to what the user is asking. Don't give generic responses.
+      Always acknowledge the user's specific question or statement. If you don't know the answer,
+      say so directly and suggest where they might find information.
       
       Here are some topics you can help with:
       - Leikskólar (Preschools)
@@ -38,8 +46,6 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
       - Íþróttir og útivist (Sports and recreation)
       - Samgöngur (Transportation)
       - Menning og viðburðir (Culture and events)
-      
-      If you don't know the answer, suggest where the user might find more information.
     `;
     
     const messages = [
@@ -56,6 +62,8 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
         content: message
       }
     ];
+    
+    console.log('Sending chat with history:', history.length, 'messages');
     
     // Use Supabase Edge Function instead of direct API
     const { data, error } = await supabase.functions.invoke('chat', {
