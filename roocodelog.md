@@ -15,3 +15,12 @@
   - shadcn/ui and custom components (VoiceAssistant, VoiceButton, VoiceVisualizer, ApiKeyModal)
   - openAiService
   - Vite, Tailwind, TypeScript, ESLint, and PostCSS setups
+- Created SMITHERY_API_GUIDE.md with comprehensive documentation on:
+  - Smithery Registry API endpoints and usage
+  - WebSocket connection details
+  - TypeScript SDK usage examples
+  - Implementation plan for Supabase MCP server integration
+- Updated TASK.md with new MCP Integration Tasks section:
+  - Added tasks for searching Smithery Registry
+  - Added tasks for evaluating and creating Supabase MCP servers
+  - Added new milestone for MCP server integration

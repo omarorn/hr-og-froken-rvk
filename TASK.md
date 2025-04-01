@@ -1,4 +1,3 @@
-
 # Project Tasks
 
 ## Active Tasks
@@ -23,6 +22,7 @@
 - [ ] Create automated tests for components and services
 - [ ] Add analytics for conversation tracking
 - [ ] Implement caching for common queries
+- [ ] Explore and integrate MCP servers for enhanced functionality
 
 ## Discovered During Work
 - [x] Fix transcription issues in audio recording workflow
@@ -31,9 +31,21 @@
 - [ ] Add timeout handling for long recordings
 - [ ] Implement better error recovery for failed transcriptions
 - [ ] Add visual feedback for voice levels during recording
+- [ ] Investigate Smithery Registry for available MCP servers
+
+## MCP Integration Tasks
+- [ ] Search Smithery Registry for available MCP servers
+- [ ] Evaluate existing Supabase-related MCP servers
+- [ ] Create a custom Supabase MCP server if needed
+- [ ] Implement enhanced smitheryService.ts with better search capabilities
+- [ ] Develop scripts for searching and connecting to MCP servers
+- [ ] Create documentation for MCP server usage in the project
+- [ ] Test MCP server integration with the voice assistant
+- [ ] Deploy and register custom MCP server with Smithery Registry
 
 ## Milestones
 - [x] Initial prototype with basic voice interaction
 - [ ] Polished UI with complete voice interaction flow
 - [ ] Production-ready application with error handling and optimizations
 - [ ] Multilingual support and advanced features
+- [ ] Enhanced functionality through MCP server integration
