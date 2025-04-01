@@ -170,6 +170,33 @@ export type Database = {
         }
         Relationships: []
       }
+      scraped_data: {
+        Row: {
+          data: Json
+          domain: string
+          id: string
+          pages_scraped: number
+          scraped_at: string
+          url: string
+        }
+        Insert: {
+          data: Json
+          domain: string
+          id?: string
+          pages_scraped: number
+          scraped_at?: string
+          url: string
+        }
+        Update: {
+          data?: Json
+          domain?: string
+          id?: string
+          pages_scraped?: number
+          scraped_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
