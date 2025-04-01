@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Globe, FileText, DownloadCloud, Database, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, ScrapedDataRecord } from "@/integrations/supabase/client";
+import { scrapingService } from '@/services/scrapingService';
 
 interface CrawlResult {
   id?: string;
@@ -18,15 +18,6 @@ interface CrawlResult {
   data: string | any[];
   timestamp: string;
   savedToDb?: boolean;
-}
-
-interface ScrapedDataRecord {
-  id: string;
-  url: string;
-  domain: string;
-  pages_scraped: number;
-  scraped_at: string;
-  data: any[];
 }
 
 const CityDataCrawler: React.FC = () => {
@@ -44,19 +35,11 @@ const CityDataCrawler: React.FC = () => {
     const fetchSavedRecords = async () => {
       setIsLoadingSaved(true);
       try {
-        const { data, error } = await supabase
-          .from('scraped_data')
-          .select('*')
-          .order('scraped_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching saved records:', error);
-          toast.error('Failed to load saved data');
-        } else {
-          setSavedRecords(data || []);
-        }
+        const records = await scrapingService.getAllScrapedData();
+        setSavedRecords(records);
       } catch (error) {
         console.error('Exception fetching saved records:', error);
+        toast.error('Failed to load saved data');
       } finally {
         setIsLoadingSaved(false);
       }
@@ -86,29 +69,18 @@ const CityDataCrawler: React.FC = () => {
         });
       }, 300);
 
-      // Call the Supabase edge function
-      const { data, error } = await supabase.functions.invoke('web-scraper', {
-        body: {
-          url,
-          maxPages,
-        }
-      });
+      // Try to use the MCP server first, with fallback to edge function
+      const scrapeResult = await scrapingService.scrapeWebsite(url, maxPages);
 
       clearInterval(progressInterval);
       setProgress(100);
       
-      if (error) {
-        console.error('Error during scrape:', error);
-        toast.error(`Failed to scrape the website: ${error.message}`);
+      if (!scrapeResult.success) {
+        toast.error(`Failed to scrape: ${scrapeResult.error}`);
         return;
       }
 
-      if (!data.success) {
-        toast.error(`Failed to scrape: ${data.error}`);
-        return;
-      }
-
-      const scrapedData = data.data;
+      const scrapedData = scrapeResult.data;
       
       // Format the result for display
       const result: CrawlResult = {
@@ -128,14 +100,8 @@ const CityDataCrawler: React.FC = () => {
       
       // Refresh saved records if the data was saved to the database
       if (result.savedToDb) {
-        const { data: newData } = await supabase
-          .from('scraped_data')
-          .select('*')
-          .order('scraped_at', { ascending: false });
-        
-        if (newData) {
-          setSavedRecords(newData);
-        }
+        const records = await scrapingService.getAllScrapedData();
+        setSavedRecords(records);
       }
     } catch (error) {
       console.error('Error during scrape:', error);
@@ -161,13 +127,10 @@ const CityDataCrawler: React.FC = () => {
   // Handle deleting a saved record
   const handleDeleteRecord = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('scraped_data')
-        .delete()
-        .eq('id', id);
+      const success = await scrapingService.deleteScrapedData(id);
       
-      if (error) {
-        toast.error(`Failed to delete record: ${error.message}`);
+      if (!success) {
+        toast.error('Failed to delete record');
       } else {
         toast.success('Record deleted successfully');
         setSavedRecords(prev => prev.filter(record => record.id !== id));
