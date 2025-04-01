@@ -4,6 +4,7 @@ import AssistantProfile from './AssistantProfile';
 import ConversationHistory from './ConversationHistory';
 import VoiceControlPanel from './VoiceControlPanel';
 import VideoChat from './VideoChat';
+import MessageSubtitles from './MessageSubtitles';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 import { useMessageService } from '@/services/messageService';
@@ -27,6 +28,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
   const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(false);
   const [showVideoChat, setShowVideoChat] = useState<boolean>(false);
+  const [showSubtitles, setShowSubtitles] = useState<boolean>(true);
+  const [audioLevel, setAudioLevel] = useState<number>(0);
+  const [activeSubtitleText, setActiveSubtitleText] = useState<string>("");
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
 
@@ -38,6 +42,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       console.log('Transcription completed, sending to AI:', transcribedText);
       const assistantMessage = await handleUserMessage(transcribedText);
       if (assistantMessage && !hasError) {
+        setActiveSubtitleText(assistantMessage.text);
         speakMessage(assistantMessage);
       }
     } catch (error) {
@@ -59,10 +64,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
+  const handleAudioLevelChange = (level: number) => {
+    setAudioLevel(level);
+  };
+
   const { isListening, transcribedText, toggleRecording, hasPermission } = useAudioRecording({
     onTranscriptionComplete: handleTranscriptionComplete,
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
+    onAudioLevelChange: handleAudioLevelChange,
     autoDetectVoice
   });
 
@@ -76,12 +86,22 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       setTimeout(() => {
         const greeting = setInitialGreeting(initialGreeting);
         if (!hasError) {
+          setActiveSubtitleText(initialGreeting);
           speakMessage(greeting);
         }
         setInitialGreetingDone(true);
       }, 1000);
     }
   }, [gender, initialGreetingDone, setInitialGreeting, speakMessage, hasError]);
+
+  // Reset subtitle text when speech ends
+  useEffect(() => {
+    if (!isSpeaking) {
+      setTimeout(() => {
+        setActiveSubtitleText("");
+      }, 500);
+    }
+  }, [isSpeaking]);
 
   const handleVoiceButtonClick = () => {
     if (!isListening && !isProcessing) {
@@ -137,6 +157,17 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                 onCheckedChange={() => setShowVideoChat(prev => !prev)}
               />
             </div>
+            
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="subtitle-toggle" className="text-sm">
+                Skjátextar
+              </Label>
+              <Switch 
+                id="subtitle-toggle" 
+                checked={showSubtitles}
+                onCheckedChange={() => setShowSubtitles(prev => !prev)}
+              />
+            </div>
           </div>
         </div>
         
@@ -160,8 +191,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           lastTranscribedText={lastTranscribedText}
           onButtonClick={handleVoiceButtonClick}
           autoDetectVoice={autoDetectVoice}
+          audioLevel={audioLevel}
         />
       </div>
+      
+      {showSubtitles && (
+        <MessageSubtitles 
+          text={activeSubtitleText} 
+          isActive={isSpeaking && activeSubtitleText !== ""}
+        />
+      )}
       
       <div className="mt-8 text-center text-sm text-iceland-darkGray">
         <p>Reykjavíkurborg Digital Assistant</p>

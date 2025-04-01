@@ -18,7 +18,7 @@ export default async function handler(req, res) {
         model: 'gpt-4o-mini-tts',
         voice: voice || 'coral',
         input: text,
-        instructions: instructions || "Speak in a clear, natural tone with appropriate emotion.",
+        instructions: instructions || "Speak in the style of a 1960s telephone operator or mission control technician with subtle electronic processing reminiscent of Knight Rider's computer voice. Professional, clear and futuristic.",
         response_format: 'mp3'
       })
     });

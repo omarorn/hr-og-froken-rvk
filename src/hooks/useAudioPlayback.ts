@@ -34,8 +34,8 @@ export const useAudioPlayback = () => {
       // Select voice based on gender
       const voice = message.gender === 'female' ? 'nova' : 'onyx';
       
-      // Instructions for Icelandic pronunciation
-      const instructions = "The voice should speak with a clear Icelandic accent and pronounce Icelandic characters like þ, ð, æ, etc. correctly. The tone should be warm and helpful, like a friendly customer service representative.";
+      // Instructions for 60s operator style with Knight Rider flair
+      const instructions = "The voice should speak with the formal, clear diction of a 1960s telephone operator or mission control technician. Pronounce Icelandic characters like þ, ð, æ, etc. correctly. Add subtle electronic processing to the voice, reminiscent of the computer voice from Knight Rider - professional but with a hint of futuristic technology. Speak at a measured pace with crisp articulation.";
       
       const audioData = await getTextToSpeech(message.text, voice, instructions);
       const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
