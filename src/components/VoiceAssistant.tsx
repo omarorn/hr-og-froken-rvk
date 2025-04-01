@@ -40,6 +40,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     showVideoChat,
     showSubtitles,
     audioLevel,
+    setAudioLevel,
     activeSubtitleText,
     setActiveSubtitleText,
     currentTranscribedText,
@@ -48,6 +49,18 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     toggleSubtitles,
     handleTranscriptionUpdate
   } = useVoiceAssistantUI();
+
+  // Get the permission dialog hook BEFORE using its values
+  const {
+    showPermissionDialog,
+    setShowPermissionDialog,
+    autoDetectVoice,
+    setAutoDetectVoice,
+    toggleAutoDetectVoice,
+    requestMicrophoneAccess
+  } = usePermissionDialog({ 
+    initializeVoiceDetection: () => initializeVoiceDetection().then(() => {}) 
+  });
 
   const {
     isProcessing,
@@ -73,15 +86,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     autoDetectVoice,
     language: 'is' // Always use Icelandic
   });
-
-  const {
-    showPermissionDialog,
-    setShowPermissionDialog,
-    autoDetectVoice,
-    setAutoDetectVoice,
-    toggleAutoDetectVoice,
-    requestMicrophoneAccess
-  } = usePermissionDialog({ initializeVoiceDetection });
 
   const handleSendMessageWrapper = async () => {
     const updatedText = await handleSendMessage(currentTranscribedText);
