@@ -114,21 +114,20 @@ export const useAudioRecording = ({
       }, 100) as unknown as number;
       
       setHasPermission(true);
-      
-      // If autoDetectVoice is enabled, start analyzing immediately
-      if (autoDetectVoice) {
-        detectSpeech();
-      }
+      return true;
       
     } catch (error) {
       console.error('Error accessing microphone for voice detection:', error);
       setHasPermission(false);
-      toast.error('Ekki tókst að fá aðgang að hljóðnema fyrir raddgreiningu.');
+      return false;
     }
   }, [autoDetectVoice, detectSpeech, isListening, onAudioLevelChange]);
 
   useEffect(() => {
-    initializeVoiceDetection();
+    // Only initialize automatically if autoDetectVoice is enabled
+    if (autoDetectVoice) {
+      initializeVoiceDetection();
+    }
     
     return () => {
       // Clean up resources
@@ -285,6 +284,7 @@ export const useAudioRecording = ({
     startRecording,
     stopRecording,
     hasPermission,
-    audioLevel
+    audioLevel,
+    initializeVoiceDetection
   };
 };

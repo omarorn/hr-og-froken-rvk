@@ -11,6 +11,8 @@ import { useMessageService } from '@/services/messageService';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -24,12 +26,13 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const messageService = useMessageService(gender);
   const { messages, isProcessing, setIsProcessing, handleUserMessage, setInitialGreeting } = messageService;
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
-  const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(true);
+  const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(false);
   const [showVideoChat, setShowVideoChat] = useState<boolean>(false);
   const [showSubtitles, setShowSubtitles] = useState<boolean>(true);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [activeSubtitleText, setActiveSubtitleText] = useState<string>("");
   const [currentTranscribedText, setCurrentTranscribedText] = useState<string>("");
+  const [showPermissionDialog, setShowPermissionDialog] = useState<boolean>(false);
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
 
@@ -76,7 +79,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     setAudioLevel(level);
   };
 
-  const { isListening, hasPermission } = useAudioRecording({
+  const { isListening, hasPermission, initializeVoiceDetection } = useAudioRecording({
     onTranscriptionComplete: handleTranscriptionComplete,
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
@@ -111,17 +114,33 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   }, [isSpeaking]);
 
-  const toggleAutoDetectVoice = () => {
-    setAutoDetectVoice(prev => !prev);
-    
+  const toggleAutoDetectVoice = async () => {
     if (!autoDetectVoice) {
-      toast.info('Sjálfvirk raddgreining virk. Talaðu til að hefja samtal.', {
-        duration: 3000
-      });
+      // Show permission dialog when enabling voice detection
+      setShowPermissionDialog(true);
     } else {
-      toast.info('Sjálfvirk raddgreining óvirk.', {
-        duration: 2000
-      });
+      setAutoDetectVoice(false);
+      toast.info('Sjálfvirk raddgreining óvirk.', { duration: 2000 });
+    }
+  };
+
+  const requestMicrophoneAccess = async () => {
+    try {
+      // Request microphone access
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Initialize voice detection with the granted permission
+      await initializeVoiceDetection();
+      
+      setAutoDetectVoice(true);
+      setShowPermissionDialog(false);
+      
+      toast.success('Sjálfvirk raddgreining virkjuð.', { duration: 3000 });
+    } catch (error) {
+      console.error('Error requesting microphone access:', error);
+      toast.error('Ekki tókst að fá aðgang að hljóðnema. Virkjaðu hljóðnemann í stillingum vafrans.');
+      setAutoDetectVoice(false);
+      setShowPermissionDialog(false);
     }
   };
 
@@ -206,6 +225,37 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         <p>Reykjavíkurborg Digital Assistant</p>
         <p className="mt-1">&copy; {new Date().getFullYear()} Reykjavíkurborg - Öll réttindi áskilin</p>
       </div>
+
+      {/* Microphone Permission Dialog */}
+      <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Heimild fyrir hljóðnema</DialogTitle>
+            <DialogDescription>
+              Til að nota sjálfvirka raddgreiningu þarf app-ið að fá aðgang að hljóðnemanum þínum.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-3 sm:justify-start">
+            <Button
+              type="button"
+              variant="default"
+              onClick={requestMicrophoneAccess}
+            >
+              Leyfa aðgang
+            </Button>
+            <Button
+              type="button" 
+              variant="outline"
+              onClick={() => {
+                setShowPermissionDialog(false);
+                setAutoDetectVoice(false);
+              }}
+            >
+              Hætta við
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
