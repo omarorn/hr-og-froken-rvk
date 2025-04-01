@@ -32,7 +32,7 @@ export const useAudioPlayback = () => {
       setIsSpeaking(true);
       
       // Select voice based on gender
-      const voice = message.gender === 'female' ? 'nova' : 'echo';
+      const voice = message.gender === 'female' ? 'nova' : 'onyx';
       
       // Instructions for Icelandic pronunciation
       const instructions = "The voice should speak with a clear Icelandic accent and pronounce Icelandic characters like þ, ð, æ, etc. correctly. The tone should be warm and helpful, like a friendly customer service representative.";

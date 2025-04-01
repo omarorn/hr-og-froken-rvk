@@ -35,10 +35,10 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'tts-1',
-        voice: voice || 'alloy',
+        model: 'gpt-4o-mini-tts',
+        voice: voice || 'coral',
         input: text,
-        instructions: instructions || undefined,
+        instructions: instructions || "Speak in a clear, natural tone with appropriate emotion.",
         response_format: 'mp3'
       })
     });
@@ -63,10 +63,6 @@ serve(async (req) => {
 
     // Get audio data as ArrayBuffer
     const audioBuffer = await response.arrayBuffer();
-    
-    // Convert to Base64 safely
-    // Use TextEncoder/TextDecoder to avoid stack issues with large audio files
-    const audioBytes = new Uint8Array(audioBuffer);
     
     // Create a safe base64 encoding function
     const toBase64 = (buffer: ArrayBuffer): string => {

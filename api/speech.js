@@ -16,9 +16,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini-tts',
-        voice: voice || 'alloy',
+        voice: voice || 'coral',
         input: text,
-        instructions: instructions || undefined,
+        instructions: instructions || "Speak in a clear, natural tone with appropriate emotion.",
         response_format: 'mp3'
       })
     });
