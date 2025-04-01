@@ -2,6 +2,7 @@
 import React from 'react';
 import VoiceButton from './VoiceButton';
 import VoiceVisualizer from './VoiceVisualizer';
+import { Mic, Headphones } from 'lucide-react';
 
 interface VoiceControlPanelProps {
   isListening: boolean;
@@ -10,6 +11,7 @@ interface VoiceControlPanelProps {
   transcribedText: string;
   lastTranscribedText: string;
   onButtonClick: () => void;
+  autoDetectVoice?: boolean;
 }
 
 const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
@@ -18,7 +20,8 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
   isSpeaking,
   transcribedText,
   lastTranscribedText,
-  onButtonClick
+  onButtonClick,
+  autoDetectVoice = false
 }) => {
   return (
     <div className="p-6 border-t border-iceland-blue/10 flex flex-col items-center">
@@ -36,17 +39,26 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
         </div>
       )}
       
-      <div className="flex items-center">
+      <div className="flex items-center space-x-4">
         {isSpeaking && (
-          <div className="mr-4">
+          <div className="mr-4 flex items-center">
+            <Headphones className="h-5 w-5 text-iceland-blue mr-2" />
             <VoiceVisualizer isActive={isSpeaking} />
           </div>
         )}
+        
         <VoiceButton 
           isListening={isListening} 
           isProcessing={isProcessing}
           onClick={onButtonClick} 
         />
+        
+        {autoDetectVoice && (
+          <div className="ml-4 flex items-center bg-iceland-blue/10 px-3 py-1 rounded-full">
+            <Mic className="h-4 w-4 text-iceland-blue mr-2" />
+            <span className="text-sm text-iceland-darkBlue">Sjálfvirk raddgreining virk</span>
+          </div>
+        )}
       </div>
     </div>
   );

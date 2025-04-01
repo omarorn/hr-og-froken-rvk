@@ -3,10 +3,13 @@ import React, { useEffect, useState } from 'react';
 import AssistantProfile from './AssistantProfile';
 import ConversationHistory from './ConversationHistory';
 import VoiceControlPanel from './VoiceControlPanel';
+import VideoChat from './VideoChat';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 import { useMessageService } from '@/services/messageService';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -22,6 +25,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const [lastTranscribedText, setLastTranscribedText] = useState<string>('');
   const [transcriptionErrors, setTranscriptionErrors] = useState<number>(0);
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
+  const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(false);
+  const [showVideoChat, setShowVideoChat] = useState<boolean>(false);
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
 
@@ -54,10 +59,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
-  const { isListening, transcribedText, toggleRecording } = useAudioRecording({
+  const { isListening, transcribedText, toggleRecording, hasPermission } = useAudioRecording({
     onTranscriptionComplete: handleTranscriptionComplete,
     onProcessingStateChange: setIsProcessing,
-    onTranscriptionError: handleTranscriptionError
+    onTranscriptionError: handleTranscriptionError,
+    autoDetectVoice
   });
 
   useEffect(() => {
@@ -85,6 +91,20 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
+  const toggleAutoDetectVoice = () => {
+    setAutoDetectVoice(prev => !prev);
+    
+    if (!autoDetectVoice) {
+      toast.info('Sjálfvirk raddgreining virk. Talaðu til að hefja samtal.', {
+        duration: 3000
+      });
+    } else {
+      toast.info('Sjálfvirk raddgreining óvirk.', {
+        duration: 2000
+      });
+    }
+  };
+
   return (
     <div className="voice-assistant-container min-h-screen flex flex-col items-center p-4 md:p-8">
       <div className="w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-iceland-blue/20">
@@ -95,13 +115,40 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             gender={gender}
           />
           
-          {lastTranscribedText && (
-            <div className="text-sm text-iceland-darkGray mt-2 flex items-center">
-              <span className="font-medium mr-1">Uppritað:</span>
-              <div className="italic">{lastTranscribedText}</div>
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="voice-detection-toggle" className="text-sm">
+                Sjálfvirk raddgreining
+              </Label>
+              <Switch 
+                id="voice-detection-toggle" 
+                checked={autoDetectVoice}
+                onCheckedChange={toggleAutoDetectVoice}
+              />
             </div>
-          )}
+            
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="video-toggle" className="text-sm">
+                Myndavél
+              </Label>
+              <Switch 
+                id="video-toggle" 
+                checked={showVideoChat}
+                onCheckedChange={() => setShowVideoChat(prev => !prev)}
+              />
+            </div>
+          </div>
         </div>
+        
+        {showVideoChat && (
+          <div className="p-4 border-b border-iceland-blue/10">
+            <VideoChat 
+              gender={gender}
+              isExpanded={true}
+              onToggleExpand={() => setShowVideoChat(false)}
+            />
+          </div>
+        )}
         
         <ConversationHistory messages={messages} />
         
@@ -112,6 +159,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           transcribedText={transcribedText}
           lastTranscribedText={lastTranscribedText}
           onButtonClick={handleVoiceButtonClick}
+          autoDetectVoice={autoDetectVoice}
         />
       </div>
       

@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { transcribeAudio } from '@/services/openAiService';
 
@@ -7,18 +7,113 @@ interface UseAudioRecordingProps {
   onTranscriptionComplete: (text: string) => void;
   onProcessingStateChange: (isProcessing: boolean) => void;
   onTranscriptionError?: () => void;
+  autoDetectVoice?: boolean;
 }
 
 export const useAudioRecording = ({ 
   onTranscriptionComplete,
   onProcessingStateChange,
-  onTranscriptionError
+  onTranscriptionError,
+  autoDetectVoice = false
 }: UseAudioRecordingProps) => {
   const [isListening, setIsListening] = useState(false);
   const [transcribedText, setTranscribedText] = useState<string>('');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioDataRef = useRef<Uint8Array | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimeoutRef = useRef<number | null>(null);
+  const silenceTimeoutRef = useRef<number | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
+
+  // Function to detect if user is speaking
+  const detectSpeech = useCallback(() => {
+    if (!analyserRef.current || !audioDataRef.current) return;
+    
+    analyserRef.current.getByteFrequencyData(audioDataRef.current);
+    
+    // Calculate average volume level
+    const average = audioDataRef.current.reduce((sum, value) => sum + value, 0) / audioDataRef.current.length;
+    
+    // Threshold for speech detection (adjust as needed)
+    const threshold = 15;
+    
+    if (average > threshold && !isSpeakingRef.current && !isListening) {
+      console.log('Speech detected, starting recording automatically');
+      isSpeakingRef.current = true;
+      startRecording();
+    } else if (average <= threshold && isSpeakingRef.current && isListening) {
+      // Set timeout to stop recording after 2 seconds of silence
+      if (!silenceTimeoutRef.current) {
+        silenceTimeoutRef.current = window.setTimeout(() => {
+          console.log('Silence detected, stopping recording automatically');
+          isSpeakingRef.current = false;
+          stopRecording();
+          silenceTimeoutRef.current = null;
+        }, 2000) as unknown as number;
+      }
+    } else if (average > threshold && silenceTimeoutRef.current) {
+      // If speech resumes, clear the silence timeout
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+  }, [isListening]);
+
+  // Initialize microphone access for voice detection
+  const initializeVoiceDetection = useCallback(async () => {
+    try {
+      console.log('Requesting microphone access for voice detection');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Create AudioContext for analyzing sound
+      audioContextRef.current = new AudioContext();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      
+      analyserRef.current.fftSize = 256;
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      audioDataRef.current = new Uint8Array(bufferLength);
+      
+      source.connect(analyserRef.current);
+      
+      // Set up ongoing analysis
+      const checkAudio = () => {
+        if (autoDetectVoice) {
+          detectSpeech();
+        }
+        requestAnimationFrame(checkAudio);
+      };
+      
+      checkAudio();
+      setHasPermission(true);
+      
+    } catch (error) {
+      console.error('Error accessing microphone for voice detection:', error);
+      setHasPermission(false);
+      toast.error('Ekki tókst að fá aðgang að hljóðnema fyrir raddgreiningu.');
+    }
+  }, [autoDetectVoice, detectSpeech]);
+
+  useEffect(() => {
+    if (autoDetectVoice) {
+      initializeVoiceDetection();
+    }
+    
+    return () => {
+      // Clean up resources
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [autoDetectVoice, initializeVoiceDetection]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -143,6 +238,11 @@ export const useAudioRecording = ({
         recordingTimeoutRef.current = null;
       }
       
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      
       toast.info('Hætt að hlusta', { 
         position: 'top-center', 
         duration: 2000 
@@ -163,6 +263,7 @@ export const useAudioRecording = ({
     transcribedText,
     toggleRecording,
     startRecording,
-    stopRecording
+    stopRecording,
+    hasPermission
   };
 };
