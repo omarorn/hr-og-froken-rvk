@@ -22,8 +22,8 @@ export const databaseService = {
           p_data: scrapedData.data
         };
         
-        // Fix the typing issue by using any as the generic type
-        const { data, error } = await supabase.rpc<any>('insert_scraped_data', params);
+        // Fix the typing issue by providing both return type and params type
+        const { data, error } = await supabase.rpc<ScrapedDataRecord, typeof params>('insert_scraped_data', params);
         
         if (!error && data) {
           return data as ScrapedDataRecord;
