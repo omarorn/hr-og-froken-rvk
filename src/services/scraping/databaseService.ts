@@ -1,4 +1,3 @@
-
 import { supabase, ScrapedDataRecord, SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from "@/integrations/supabase/client";
 
 /**
@@ -15,21 +14,18 @@ export const databaseService = {
     try {
       // Try to use the stored procedure first
       try {
-        // Fix: Properly type the RPC call with both required type arguments
-        const { data, error } = await supabase.rpc<ScrapedDataRecord, {
-          p_url: string;
-          p_domain: string;
-          p_pages_scraped: number;
-          p_data: any;
-        }>('insert_scraped_data', {
+        const params = {
           p_url: url,
           p_domain: scrapedData.domain,
           p_pages_scraped: scrapedData.pagesScraped,
           p_data: scrapedData.data
-        });
+        };
+        
+        // Use the generic type argument correctly for the rpc method
+        const { data, error } = await supabase.rpc('insert_scraped_data', params);
         
         if (!error && data) {
-          return data;
+          return data as ScrapedDataRecord;
         }
         
         throw new Error("RPC failed or returned no data");
