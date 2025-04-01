@@ -172,7 +172,7 @@ export const scrapingService = {
           p_domain: scrapedData.domain,
           p_pages_scraped: scrapedData.pagesScraped,
           p_data: scrapedData.data
-        }) as { data: ScrapedDataRecord | null, error: any };
+        }) as unknown as { data: ScrapedDataRecord | null, error: any };
         
         if (!error && data) {
           return data;
