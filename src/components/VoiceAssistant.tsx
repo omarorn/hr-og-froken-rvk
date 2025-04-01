@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MessageSubtitles from './MessageSubtitles';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
@@ -11,6 +10,7 @@ import { useGreeting } from '@/hooks/useGreeting';
 import { usePermissionDialog } from '@/hooks/usePermissionDialog';
 import { useVoiceAssistantUI } from '@/hooks/useVoiceAssistantUI';
 import { useVoiceMessageHandler } from '@/hooks/useVoiceMessageHandler';
+import { useMCP } from '@/hooks/useMCP';
 import BackgroundContainer from './voice/BackgroundContainer';
 
 interface VoiceAssistantProps {
@@ -35,6 +35,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
   const { initialGreeting, isLoading: isGreetingLoading } = useGreeting(gender);
+  
+  // Initialize MCP servers
+  const { supabaseMCP, codeMCP, gSuiteMCP } = useMCP();
   
   const {
     showVideoChat,
@@ -92,6 +95,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     setCurrentTranscribedText(updatedText);
   };
 
+  // Log MCP server status
+  useEffect(() => {
+    console.log('MCP Server Status:', {
+      supabase: supabaseMCP.status.connected ? 'Connected' : 'Disconnected',
+      code: codeMCP.status.connected ? 'Connected' : 'Disconnected',
+      gSuite: gSuiteMCP.status.connected ? 'Connected' : 'Disconnected'
+    });
+  }, [supabaseMCP.status, codeMCP.status, gSuiteMCP.status]);
+
   useEffect(() => {
     // Load initial greeting only once
     if (!initialGreetingDone && !isGreetingLoading && initialGreeting) {
@@ -136,6 +148,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         toggleSubtitles={toggleSubtitles}
         showSubtitles={showSubtitles}
         currentScenario={currentScenario}
+        mcpStatus={{
+          supabase: supabaseMCP.status.connected,
+          code: codeMCP.status.connected,
+          gSuite: gSuiteMCP.status.connected
+        }}
       />
       
       {showSubtitles && (

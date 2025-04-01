@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { enhancePromptWithContext } from "@/services/contextService";
 import { getCurrentTime } from "@/services/timeService";
+import { useSupabaseMCP } from "@/hooks/useMCP";
 
 /**
  * Service for handling chat-based interactions with OpenAI
@@ -41,6 +42,27 @@ export enum ConversationScenario {
  */
 export const sendChatMessage = async (message: string, history: any[] = []): Promise<ChatResponse> => {
   try {
+    // Initialize Supabase MCP tools
+    let supabaseMCPTools = null;
+    try {
+      // Create a temporary instance of the hook's return value
+      const { readRows, createRecord, updateRecord, deleteRecord, status } = useSupabaseMCP();
+      
+      if (status.connected) {
+        supabaseMCPTools = {
+          readRows,
+          createRecord,
+          updateRecord,
+          deleteRecord
+        };
+        console.log('Supabase MCP server connected and ready for use');
+      } else {
+        console.warn('Supabase MCP server not connected:', status.error);
+      }
+    } catch (error) {
+      console.error('Failed to initialize Supabase MCP tools:', error);
+    }
+    
     // Determine assistant name based on gender in history
     const gender = history.length > 0 && history[0].gender === 'male' ? 'male' : 'female';
     const assistantName = gender === 'male' ? 'Birkir' : 'Rósa';
@@ -231,6 +253,20 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
     // Get the scenario-specific system prompt
     const systemPrompt = await getScenarioPrompt(scenario);
     
+    // Add MCP tools information to the system message if available
+    let mcpToolsInfo = '';
+    if (supabaseMCPTools) {
+      mcpToolsInfo = `
+        You have access to a Supabase database through the following tools:
+        - readRows: Read rows from a table
+        - createRecord: Create a new record in a table
+        - updateRecord: Update an existing record in a table
+        - deleteRecord: Delete a record from a table
+        
+        Use these tools when appropriate to store or retrieve information.
+      `;
+    }
+    
     // Add current time to the system message
     const timeInfo = getCurrentTime();
     const timeMessage = `Current time in Reykjavik: ${timeInfo.hour}:${String(timeInfo.minute).padStart(2, '0')}`;
@@ -238,7 +274,7 @@ export const sendChatMessage = async (message: string, history: any[] = []): Pro
     const messages = [
       {
         role: "system",
-        content: `${systemPrompt}\n\n${timeMessage}`
+        content: `${systemPrompt}\n\n${mcpToolsInfo}\n\n${timeMessage}`
       },
       ...history.map(entry => ({
         role: entry.isUser ? "user" : "assistant",
