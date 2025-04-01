@@ -1,5 +1,5 @@
 
-import { supabase, ScrapedDataRecord } from "@/integrations/supabase/client";
+import { supabase, ScrapedDataRecord, SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from "@/integrations/supabase/client";
 import { WebSocketClientTransport } from "@modelcontextprotocol/sdk/client/websocket.js";
 import { createSmitheryUrl } from "@smithery/sdk/config.js";
 
@@ -165,24 +165,24 @@ export const scrapingService = {
    */
   async saveScrapedData(url: string, scrapedData: any): Promise<ScrapedDataRecord | null> {
     try {
-      // Use raw insert query to work around TypeScript issues
+      // Use rpc function to insert data
       const { data, error } = await supabase.rpc('insert_scraped_data', {
         p_url: url,
         p_domain: scrapedData.domain,
         p_pages_scraped: scrapedData.pagesScraped,
         p_data: scrapedData.data
-      }).single();
+      });
       
       if (error) {
         console.error('Error saving scraped data:', error);
         
         // Fall back to direct insert if RPC doesn't exist
-        const insertResult = await fetch(`${supabase.supabaseUrl}/rest/v1/scraped_data`, {
+        const insertResult = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.supabaseKey}`,
-            'apikey': supabase.supabaseKey,
+            'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
+            'apikey': SUPABASE_PUBLIC_KEY,
           },
           body: JSON.stringify({
             url,
@@ -215,10 +215,10 @@ export const scrapingService = {
   async getAllScrapedData(): Promise<ScrapedDataRecord[]> {
     try {
       // Use raw fetch to work around TypeScript issues
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/scraped_data?order=scraped_at.desc`, {
+      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data?order=scraped_at.desc`, {
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
+          'apikey': SUPABASE_PUBLIC_KEY,
         }
       });
       
@@ -242,10 +242,10 @@ export const scrapingService = {
   async getScrapedDataById(id: string): Promise<ScrapedDataRecord | null> {
     try {
       // Use raw fetch to work around TypeScript issues
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/scraped_data?id=eq.${id}&limit=1`, {
+      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data?id=eq.${id}&limit=1`, {
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
+          'apikey': SUPABASE_PUBLIC_KEY,
         }
       });
       
@@ -269,11 +269,11 @@ export const scrapingService = {
   async deleteScrapedData(id: string): Promise<boolean> {
     try {
       // Use raw fetch to work around TypeScript issues
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/scraped_data?id=eq.${id}`, {
+      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data?id=eq.${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
+          'apikey': SUPABASE_PUBLIC_KEY,
         }
       });
       
