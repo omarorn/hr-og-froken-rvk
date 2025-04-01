@@ -28,6 +28,9 @@ export default async function handler(req, res) {
     formData.append('language', language);
     formData.append('response_format', 'json');
 
+    // Add more detailed logging
+    console.log('Sending request to OpenAI API');
+    
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -37,10 +40,11 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(e => ({ error: { message: 'Failed to parse error response' } }));
       console.error('OpenAI API error:', errorData);
       return res.status(response.status).json({ 
-        error: errorData.error?.message || response.statusText 
+        error: errorData.error?.message || response.statusText,
+        status: response.status
       });
     }
 
@@ -52,6 +56,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Error in transcribe endpoint:', error.message, error.stack);
-    return res.status(500).json({ error: 'Error processing request' });
+    return res.status(500).json({ error: 'Error processing request: ' + error.message });
   }
 }

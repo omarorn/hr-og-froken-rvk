@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import VoiceButton from './VoiceButton';
 import MessageBubble from './MessageBubble';
@@ -6,6 +7,7 @@ import VoiceVisualizer from './VoiceVisualizer';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 import { useMessageService } from '@/services/messageService';
+import { toast } from 'sonner';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -20,16 +22,36 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const messageService = useMessageService(gender);
   const { messages, isProcessing, setIsProcessing, handleUserMessage } = messageService;
   const [lastTranscribedText, setLastTranscribedText] = useState<string>('');
+  const [transcriptionErrors, setTranscriptionErrors] = useState<number>(0);
   
   const { isSpeaking, speakMessage } = useAudioPlayback();
 
   const handleTranscriptionComplete = async (transcribedText: string) => {
-    setLastTranscribedText(transcribedText);
+    try {
+      setLastTranscribedText(transcribedText);
+      setTranscriptionErrors(0);
+      
+      console.log('Transcription completed, sending to AI:', transcribedText);
+      const assistantMessage = await handleUserMessage(transcribedText);
+      if (assistantMessage) {
+        speakMessage(assistantMessage);
+      }
+    } catch (error) {
+      console.error('Error handling transcription:', error);
+      toast.error('Villa kom upp við vinnslu fyrirspurnar. Reyndu aftur.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTranscriptionError = () => {
+    setTranscriptionErrors(prev => prev + 1);
     
-    console.log('Transcription completed, sending to AI:', transcribedText);
-    const assistantMessage = await handleUserMessage(transcribedText);
-    if (assistantMessage) {
-      speakMessage(assistantMessage);
+    // If we've had multiple errors in a row, suggest troubleshooting
+    if (transcriptionErrors >= 2) {
+      toast.error(
+        'Endurtekinn vandi við að þekkja tal. Athugaðu hljóðnemann þinn og prófaðu að tala hærra og skýrar.',
+        { duration: 5000 }
+      );
     }
   };
 
@@ -39,18 +61,19 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   });
 
   useEffect(() => {
+    // Load initial greeting
     const initialGreeting = gender === 'female' 
       ? "Góðan dag, ég heiti Rósa. Hvernig get ég aðstoðað þig í dag?"
       : "Góðan dag, ég heiti Birkir. Hvernig get ég aðstoðað þig í dag?";
     
     setTimeout(() => {
       const greeting = messageService.setInitialGreeting(initialGreeting);
-      
       speakMessage(greeting);
     }, 1000);
   }, [gender]);
 
   useEffect(() => {
+    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 

@@ -19,24 +19,45 @@ export const useAudioRecording = ({
 
   const startRecording = async () => {
     try {
+      console.log('Requesting microphone access');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      const mediaRecorder = new MediaRecorder(stream);
+      console.log('Microphone access granted, creating MediaRecorder');
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm'
+      });
+      
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log(`Received audio chunk: ${event.data.size} bytes`);
           audioChunksRef.current.push(event.data);
         }
       };
       
       mediaRecorder.onstop = async () => {
+        if (audioChunksRef.current.length === 0) {
+          console.error('No audio data collected during recording');
+          toast.error('Engin hljóðgögn söfnuðust. Reyndu aftur.');
+          onProcessingStateChange(false);
+          return;
+        }
+        
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         console.log('Recording stopped, audio blob size:', audioBlob.size);
         
+        if (audioBlob.size < 100) {
+          console.error('Audio blob too small, likely no audio recorded');
+          toast.error('Upptaka of stutt. Reyndu aftur og talaðu nær hljóðnemanum.');
+          onProcessingStateChange(false);
+          return;
+        }
+        
         try {
           onProcessingStateChange(true);
+          setTranscribedText('Vinsamlegast bíðið, er að vinna úr hljóðupptöku...');
           
           // Transcribe the audio
           const transcribedText = await transcribeAudio(audioBlob);
@@ -65,7 +86,8 @@ export const useAudioRecording = ({
         stream.getTracks().forEach(track => track.stop());
       };
       
-      mediaRecorder.start();
+      // Start recording with a 10 second timeslice to get frequent ondataavailable events
+      mediaRecorder.start(1000);
       setIsListening(true);
       
       toast.info('Ég er að hlusta...', { 
