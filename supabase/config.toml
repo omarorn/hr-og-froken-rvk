@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.chat]
 verify_jwt = false
+
+[functions.web-scraper]
+verify_jwt = false
