@@ -9,6 +9,7 @@ interface UseAudioRecordingProps {
   onTranscriptionError?: () => void;
   onAudioLevelChange?: (level: number) => void;
   autoDetectVoice?: boolean;
+  language?: string;
 }
 
 export const useAudioRecording = ({ 
@@ -16,7 +17,8 @@ export const useAudioRecording = ({
   onProcessingStateChange,
   onTranscriptionError,
   onAudioLevelChange,
-  autoDetectVoice = false
+  autoDetectVoice = false,
+  language = 'is' // Default to Icelandic
 }: UseAudioRecordingProps) => {
   const [isListening, setIsListening] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -31,6 +33,12 @@ export const useAudioRecording = ({
   const isSpeakingRef = useRef<boolean>(false);
   const audioLevelIntervalRef = useRef<number | null>(null);
   const processingRef = useRef<boolean>(false);
+  const languageRef = useRef<string>(language);
+
+  // Update language ref if prop changes
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
 
   // Function to detect if user is speaking
   const detectSpeech = useCallback(() => {
@@ -196,6 +204,13 @@ export const useAudioRecording = ({
           const transcriptionTimeout = setTimeout(() => {
             console.warn('Transcription taking longer than expected');
           }, 10000);
+          
+          console.log(`Transcribing audio with language: ${languageRef.current}`);
+          
+          // Add Icelandic language parameter to FormData when calling transcribeAudio
+          const formData = new FormData();
+          formData.append('file', audioBlob);
+          formData.append('language', languageRef.current);
           
           // Transcribe the audio
           const transcribedText = await transcribeAudio(audioBlob);

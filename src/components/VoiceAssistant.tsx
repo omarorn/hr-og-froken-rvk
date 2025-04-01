@@ -84,7 +84,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
     onAudioLevelChange: handleAudioLevelChange,
-    autoDetectVoice
+    autoDetectVoice,
+    language: 'is' // Always use Icelandic
   });
 
   useEffect(() => {

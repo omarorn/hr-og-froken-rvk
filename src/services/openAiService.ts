@@ -50,9 +50,9 @@ const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     // Create a direct FormData to send to the API
     const formData = new FormData();
     formData.append('file', audioBlob, 'audio.webm');
-    formData.append('language', 'is');
+    formData.append('language', 'is'); // Specify Icelandic language
     
-    console.log('Sending audio data to transcribe API');
+    console.log('Sending audio data to transcribe API with Icelandic language setting');
     
     // Send directly to our API endpoint
     const response = await fetch('/api/transcribe', {

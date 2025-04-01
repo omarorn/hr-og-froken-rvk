@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No file received' });
     }
     
-    const language = req.body.get('language') || 'is';
+    const language = req.body.get('language') || 'is'; // Default to Icelandic
     
     console.log('Processing transcription request', { 
       language, 
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     formData.append('response_format', 'json');
 
     // Add more detailed logging
-    console.log('Sending request to OpenAI API');
+    console.log('Sending request to OpenAI API with language:', language);
     
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
