@@ -12,6 +12,7 @@ interface Message {
 
 export const useAudioPlayback = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Initialize audio element
@@ -25,7 +26,7 @@ export const useAudioPlayback = () => {
   }, []);
 
   const speakMessage = async (message: Message) => {
-    if (message.isUser) return;
+    if (message.isUser || hasError) return;
     
     try {
       setIsSpeaking(true);
@@ -56,12 +57,16 @@ export const useAudioPlayback = () => {
     } catch (error) {
       console.error('Failed to speak message:', error);
       setIsSpeaking(false);
-      toast.error('Villa við afspilun á rödd. Reyndu aftur.');
+      setHasError(true); // Set error flag to prevent further attempts
+      toast.error('Villa við afspilun á rödd. Verður að nota textann í staðinn.', {
+        duration: 5000,
+      });
     }
   };
 
   return {
     isSpeaking,
-    speakMessage
+    speakMessage,
+    hasError
   };
 };

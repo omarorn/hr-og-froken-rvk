@@ -18,11 +18,12 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   gender = 'female' 
 }) => {
   const messageService = useMessageService(gender);
-  const { messages, isProcessing, setIsProcessing, handleUserMessage } = messageService;
+  const { messages, isProcessing, setIsProcessing, handleUserMessage, setInitialGreeting } = messageService;
   const [lastTranscribedText, setLastTranscribedText] = useState<string>('');
   const [transcriptionErrors, setTranscriptionErrors] = useState<number>(0);
+  const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
   
-  const { isSpeaking, speakMessage } = useAudioPlayback();
+  const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
 
   const handleTranscriptionComplete = async (transcribedText: string) => {
     try {
@@ -31,7 +32,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       
       console.log('Transcription completed, sending to AI:', transcribedText);
       const assistantMessage = await handleUserMessage(transcribedText);
-      if (assistantMessage) {
+      if (assistantMessage && !hasError) {
         speakMessage(assistantMessage);
       }
     } catch (error) {
@@ -60,16 +61,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   });
 
   useEffect(() => {
-    // Load initial greeting
-    const initialGreeting = gender === 'female' 
-      ? "Góðan dag, ég heiti Rósa. Hvernig get ég aðstoðað þig í dag?"
-      : "Góðan dag, ég heiti Birkir. Hvernig get ég aðstoðað þig í dag?";
-    
-    setTimeout(() => {
-      const greeting = messageService.setInitialGreeting(initialGreeting);
-      speakMessage(greeting);
-    }, 1000);
-  }, [gender, messageService, speakMessage]);
+    // Load initial greeting only once
+    if (!initialGreetingDone) {
+      const initialGreeting = gender === 'female' 
+        ? "Góðan dag, ég heiti Rósa. Hvernig get ég aðstoðað þig í dag?"
+        : "Góðan dag, ég heiti Birkir. Hvernig get ég aðstoðað þig í dag?";
+      
+      setTimeout(() => {
+        const greeting = setInitialGreeting(initialGreeting);
+        if (!hasError) {
+          speakMessage(greeting);
+        }
+        setInitialGreetingDone(true);
+      }, 1000);
+    }
+  }, [gender, initialGreetingDone, setInitialGreeting, speakMessage, hasError]);
 
   const handleVoiceButtonClick = () => {
     if (!isListening && !isProcessing) {

@@ -15,6 +15,18 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({ messages }) =
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Add empty state when no messages
+  if (messages.length === 0) {
+    return (
+      <div className="h-96 md:h-[420px] overflow-y-auto p-6 flex items-center justify-center bg-iceland-gray/30">
+        <div className="text-iceland-darkGray text-center">
+          <p className="text-lg font-medium">Engar skilaboð ennþá</p>
+          <p className="text-sm">Smelltu á takkann til að tala við aðstoðarmanninn</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-96 md:h-[420px] overflow-y-auto p-6 space-y-4 bg-iceland-gray/30">
       {messages.map((message) => (
