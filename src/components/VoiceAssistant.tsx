@@ -1,18 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import AssistantProfile from './AssistantProfile';
-import ConversationHistory from './ConversationHistory';
-import VoiceControlPanel from './VoiceControlPanel';
-import VideoChat from './VideoChat';
 import MessageSubtitles from './MessageSubtitles';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 import { useMessageService } from '@/services/messageService';
 import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import AssistantContainer from './voice/AssistantContainer';
+import Footer from './voice/Footer';
+import MicrophonePermissionDialog from './voice/MicrophonePermissionDialog';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -145,75 +140,29 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   };
 
+  const toggleVideoChat = () => setShowVideoChat(prev => !prev);
+  const toggleSubtitles = () => setShowSubtitles(prev => !prev);
+
   return (
     <div className="voice-assistant-container min-h-screen flex flex-col items-center p-4 md:p-8">
-      <div className="w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-iceland-blue/20">
-        <div className="p-6 border-b border-iceland-blue/10 flex justify-between items-center">
-          <AssistantProfile 
-            name={assistantName} 
-            isActive={isSpeaking}
-            gender={gender}
-          />
-          
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="voice-detection-toggle" className="text-sm">
-                Sjálfvirk raddgreining
-              </Label>
-              <Switch 
-                id="voice-detection-toggle" 
-                checked={autoDetectVoice}
-                onCheckedChange={toggleAutoDetectVoice}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="video-toggle" className="text-sm">
-                Myndavél
-              </Label>
-              <Switch 
-                id="video-toggle" 
-                checked={showVideoChat}
-                onCheckedChange={() => setShowVideoChat(prev => !prev)}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="subtitle-toggle" className="text-sm">
-                Skjátextar
-              </Label>
-              <Switch 
-                id="subtitle-toggle" 
-                checked={showSubtitles}
-                onCheckedChange={() => setShowSubtitles(prev => !prev)}
-              />
-            </div>
-          </div>
-        </div>
-        
-        {showVideoChat && (
-          <div className="p-4 border-b border-iceland-blue/10">
-            <VideoChat 
-              gender={gender}
-              isExpanded={true}
-              onToggleExpand={() => setShowVideoChat(false)}
-            />
-          </div>
-        )}
-        
-        <ConversationHistory messages={messages} />
-        
-        <VoiceControlPanel 
-          isListening={isListening}
-          isProcessing={isProcessing}
-          isSpeaking={isSpeaking}
-          transcribedText={currentTranscribedText}
-          onTranscribedTextChange={handleTranscriptionUpdate}
-          onSendMessage={handleSendMessage}
-          autoDetectVoice={autoDetectVoice}
-          audioLevel={audioLevel}
-        />
-      </div>
+      <AssistantContainer 
+        assistantName={assistantName}
+        gender={gender}
+        messages={messages}
+        isSpeaking={isSpeaking}
+        isListening={isListening}
+        isProcessing={isProcessing}
+        autoDetectVoice={autoDetectVoice}
+        showVideoChat={showVideoChat}
+        audioLevel={audioLevel}
+        currentTranscribedText={currentTranscribedText}
+        onTranscribedTextChange={handleTranscriptionUpdate}
+        onSendMessage={handleSendMessage}
+        toggleAutoDetectVoice={toggleAutoDetectVoice}
+        toggleVideoChat={toggleVideoChat}
+        toggleSubtitles={toggleSubtitles}
+        showSubtitles={showSubtitles}
+      />
       
       {showSubtitles && (
         <MessageSubtitles 
@@ -222,41 +171,17 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         />
       )}
       
-      <div className="mt-8 text-center text-sm text-iceland-darkGray">
-        <p>Reykjavíkurborg Digital Assistant</p>
-        <p className="mt-1">&copy; {new Date().getFullYear()} Reykjavíkurborg - Öll réttindi áskilin</p>
-      </div>
+      <Footer />
 
-      {/* Microphone Permission Dialog */}
-      <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Heimild fyrir hljóðnema</DialogTitle>
-            <DialogDescription>
-              Til að nota sjálfvirka raddgreiningu þarf app-ið að fá aðgang að hljóðnemanum þínum.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-row gap-3 sm:justify-start">
-            <Button
-              type="button"
-              variant="default"
-              onClick={requestMicrophoneAccess}
-            >
-              Leyfa aðgang
-            </Button>
-            <Button
-              type="button" 
-              variant="outline"
-              onClick={() => {
-                setShowPermissionDialog(false);
-                setAutoDetectVoice(false);
-              }}
-            >
-              Hætta við
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <MicrophonePermissionDialog 
+        open={showPermissionDialog}
+        onOpenChange={setShowPermissionDialog}
+        onRequestAccess={requestMicrophoneAccess}
+        onCancel={() => {
+          setShowPermissionDialog(false);
+          setAutoDetectVoice(false);
+        }}
+      />
     </div>
   );
 };
