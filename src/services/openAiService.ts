@@ -10,15 +10,23 @@ const getVoiceInstructions = (scenario?: string, gender: 'female' | 'male' = 'fe
   
   switch (scenario) {
     case ConversationScenario.GREETING:
-      return `${baseInstructions} Greet the listener with warmth and enthusiasm without being overly casual.`;
+      return `${baseInstructions} Greet the listener with warmth and enthusiasm without being overly casual. Use a rising tone at the beginning like a radio DJ starting their show.`;
     case ConversationScenario.HOLD:
-      return `${baseInstructions} Speak in a calming, reassuring tone that makes the listener comfortable while waiting.`;
+      return `${baseInstructions} Speak in a calming, reassuring tone that makes the listener comfortable while waiting. Use a soothing, melodious tone like a late-night radio show host.`;
     case ConversationScenario.TECHNICAL_SUPPORT:
-      return `${baseInstructions} Use a patient, clear, and helpful tone that conveys technical expertise.`;
+      return `${baseInstructions} Use a patient, clear, and helpful tone that conveys technical expertise. Speak with a slightly slower pace and precise enunciation like a technical specialist.`;
     case ConversationScenario.FOLLOW_UP:
-      return `${baseInstructions} Sound enthusiastic about sharing the information you've found.`;
+      return `${baseInstructions} Sound enthusiastic about sharing the information you've found. Use the excited tone of a DJ announcing contest results.`;
     case ConversationScenario.FAREWELL:
-      return `${baseInstructions} Sound genuinely appreciative and warm in your goodbye.`;
+      return `${baseInstructions} Sound genuinely appreciative and warm in your goodbye. Use the gentle, winding-down tone of a DJ ending their broadcast for the day.`;
+    case ConversationScenario.BUS_INFO:
+      return `${baseInstructions} Use a clear, informative tone like a public transit announcement system. Enunciate numbers and route information with extra clarity like a professional transit announcer.`;
+    case ConversationScenario.WASTE_INFO:
+      return `${baseInstructions} Speak with a helpful, educational tone. Use the clear, instructional voice of a public service announcement.`;
+    case ConversationScenario.LOCATION_INFO:
+      return `${baseInstructions} Use the engaging, descriptive tone of a tour guide. Add a touch of local pride when describing Reykjavik locations.`;
+    case ConversationScenario.CITY_INFO:
+      return `${baseInstructions} Speak with the authoritative yet welcoming tone of a city information specialist. Project confidence and civic pride in your voice.`;
     default:
       return baseInstructions;
   }

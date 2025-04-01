@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { sendChatMessage, ConversationScenario } from '@/services/chatService';
 import { toast } from 'sonner';
+import { generateContext } from '@/services/contextService';
 
 export interface Message {
   text: string;
@@ -15,6 +16,7 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentScenario, setCurrentScenario] = useState<string>(ConversationScenario.GREETING);
+  const [contextData, setContextData] = useState<any>(null);
 
   const addMessage = (text: string, isUser: boolean, scenario?: string) => {
     const newMessage = {
@@ -48,6 +50,18 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
       }));
       
       console.log('Sending user question to AI:', text);
+      
+      // Update contextual data if needed
+      if (!contextData || Date.now() - (contextData.timestamp || 0) > 300000) { // 5 minutes
+        try {
+          const newContext = await generateContext();
+          newContext.timestamp = Date.now();
+          setContextData(newContext);
+          console.log('Updated contextual data:', newContext);
+        } catch (error) {
+          console.error('Failed to update contextual data:', error);
+        }
+      }
       
       // Send the message to OpenAI
       const response = await sendChatMessage(text, conversationHistory);
@@ -86,6 +100,7 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
     addMessage,
     handleUserMessage,
     setInitialGreeting,
-    currentScenario
+    currentScenario,
+    contextData
   };
 };

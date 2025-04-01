@@ -15,6 +15,7 @@ export const useAudioPlayback = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [hasError, setHasError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioSource, setAudioSource] = useState<string | null>(null);
   
   // Initialize audio element
   useEffect(() => {
@@ -38,14 +39,26 @@ export const useAudioPlayback = () => {
         audioRef.current.pause();
         audioRef.current.onended = null;
         audioRef.current.onerror = null;
+        
+        // Clean up any audio source URLs
+        if (audioSource) {
+          URL.revokeObjectURL(audioSource);
+          setAudioSource(null);
+        }
       }
     };
-  }, []);
+  }, [audioSource]);
 
   const speakMessage = async (message: Message) => {
     if (message.isUser || hasError) return;
     
     try {
+      // Clean up previous audio source if it exists
+      if (audioSource) {
+        URL.revokeObjectURL(audioSource);
+        setAudioSource(null);
+      }
+      
       setIsSpeaking(true);
       
       // Select voice based on gender
@@ -62,6 +75,7 @@ export const useAudioPlayback = () => {
       
       const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
+      setAudioSource(audioUrl);
       
       if (audioRef.current) {
         // Pause and reset any current playback
@@ -78,15 +92,10 @@ export const useAudioPlayback = () => {
             originalOnEnded.call(audioRef.current);
           }
           setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
         };
         
         // Begin playback
-        audioRef.current.play().catch(error => {
-          console.error('Audio playback error:', error);
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-        });
+        await audioRef.current.play();
       }
     } catch (error) {
       console.error('Failed to speak message:', error);
@@ -98,9 +107,18 @@ export const useAudioPlayback = () => {
     }
   };
 
+  const stopSpeaking = () => {
+    if (audioRef.current && isSpeaking) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsSpeaking(false);
+    }
+  };
+
   return {
     isSpeaking,
     speakMessage,
+    stopSpeaking,
     hasError
   };
 };
