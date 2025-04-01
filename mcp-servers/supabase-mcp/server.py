@@ -1,5 +1,6 @@
 import os
-from fastmcp import FastMCP, tool
+from fastmcp import FastMCP
+from fastmcp.tools import tool
 
 @tool(description="Reads rows from a Supabase table", config_schema={"table": {"type": "string"}})
 def read_rows(table: str):

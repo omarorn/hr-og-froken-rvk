@@ -151,13 +151,13 @@ function getCurrentTime() {
 // Get appropriate greeting based on time
 function getGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) {
-    return "Góðan morgun";
+    return "Góðan dag";
   } else if (hour >= 12 && hour < 18) {
     return "Góðan dag";
   } else if (hour >= 18 && hour < 22) {
     return "Gott kvöld";
   } else {
-    return "Góða nótt";
+    return "Góða kvöldið (góða nótt ef það e verið að kveðja seint";
   }
 }
 

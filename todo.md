@@ -35,7 +35,7 @@
 - [x] Install required MCP servers (@block/code-mcp, @rishipradeep-think41/gsuite-mcp)
 - [x] Create custom Supabase MCP server
 - [x] Configure MCP servers in .roo/mcp.json
-- [ ] Test MCP server integration with voice assistant
+- [ ] Test MCP server integration with coder assistant
 - [ ] Create unit tests for MCP server tools
 - [ ] Add error handling for MCP server connections
 - [ ] Document MCP server usage in the application
