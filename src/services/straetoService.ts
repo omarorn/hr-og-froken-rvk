@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/supabaseClient'; // Assuming supabase client setup
+import { supabase } from '@/integrations/supabase/client'; // Corrected import path
 
 const FUNCTION_NAME = 'straeto';
 

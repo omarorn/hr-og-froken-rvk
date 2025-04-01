@@ -15,16 +15,18 @@ export const databaseService = {
     try {
       // Try to use the stored procedure first
       try {
-        // Fix: Properly type the RPC call with explicit generic type parameters
-        const { data, error } = await supabase.rpc<ScrapedDataRecord>('insert_scraped_data', {
+        const params = {
           p_url: url,
           p_domain: scrapedData.domain,
           p_pages_scraped: scrapedData.pagesScraped,
           p_data: scrapedData.data
-        });
+        };
+        
+        // Fix the typing issue by providing both return type and params type
+        const { data, error } = await supabase.rpc<ScrapedDataRecord, typeof params>('insert_scraped_data', params);
         
         if (!error && data) {
-          return data;
+          return data as ScrapedDataRecord;
         }
         
         throw new Error("RPC failed or returned no data");
