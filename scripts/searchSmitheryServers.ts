@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * Script to search for servers in the Smithery Registry
  * 
