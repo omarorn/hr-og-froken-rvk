@@ -12,6 +12,7 @@ interface VoiceControlPanelProps {
   lastTranscribedText: string;
   onButtonClick: () => void;
   autoDetectVoice?: boolean;
+  audioLevel?: number;
 }
 
 const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
@@ -21,7 +22,8 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
   transcribedText,
   lastTranscribedText,
   onButtonClick,
-  autoDetectVoice = false
+  autoDetectVoice = false,
+  audioLevel = 0
 }) => {
   return (
     <div className="p-6 border-t border-iceland-blue/10 flex flex-col items-center">
@@ -43,7 +45,14 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
         {isSpeaking && (
           <div className="mr-4 flex items-center">
             <Headphones className="h-5 w-5 text-iceland-blue mr-2" />
-            <VoiceVisualizer isActive={isSpeaking} />
+            <VoiceVisualizer isActive={isSpeaking} audioLevel={0.7} />
+          </div>
+        )}
+        
+        {isListening && (
+          <div className="mr-4 flex items-center">
+            <Mic className="h-5 w-5 text-iceland-red mr-2" />
+            <VoiceVisualizer isActive={isListening} audioLevel={audioLevel} />
           </div>
         )}
         

@@ -7,6 +7,7 @@ interface UseAudioRecordingProps {
   onTranscriptionComplete: (text: string) => void;
   onProcessingStateChange: (isProcessing: boolean) => void;
   onTranscriptionError?: () => void;
+  onAudioLevelChange?: (level: number) => void;
   autoDetectVoice?: boolean;
 }
 
@@ -14,11 +15,13 @@ export const useAudioRecording = ({
   onTranscriptionComplete,
   onProcessingStateChange,
   onTranscriptionError,
+  onAudioLevelChange,
   autoDetectVoice = false
 }: UseAudioRecordingProps) => {
   const [isListening, setIsListening] = useState(false);
   const [transcribedText, setTranscribedText] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [audioLevel, setAudioLevel] = useState<number>(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -27,6 +30,7 @@ export const useAudioRecording = ({
   const recordingTimeoutRef = useRef<number | null>(null);
   const silenceTimeoutRef = useRef<number | null>(null);
   const isSpeakingRef = useRef<boolean>(false);
+  const audioLevelIntervalRef = useRef<number | null>(null);
 
   // Function to detect if user is speaking
   const detectSpeech = useCallback(() => {
@@ -36,6 +40,14 @@ export const useAudioRecording = ({
     
     // Calculate average volume level
     const average = audioDataRef.current.reduce((sum, value) => sum + value, 0) / audioDataRef.current.length;
+    
+    // Normalize audio level between 0 and 1
+    const normalizedLevel = Math.min(1, Math.max(0, average / 128));
+    setAudioLevel(normalizedLevel);
+    
+    if (onAudioLevelChange) {
+      onAudioLevelChange(normalizedLevel);
+    }
     
     // Threshold for speech detection (adjust as needed)
     const threshold = 15;
@@ -59,7 +71,7 @@ export const useAudioRecording = ({
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
     }
-  }, [isListening]);
+  }, [isListening, onAudioLevelChange]);
 
   // Initialize microphone access for voice detection
   const initializeVoiceDetection = useCallback(async () => {
@@ -78,15 +90,29 @@ export const useAudioRecording = ({
       
       source.connect(analyserRef.current);
       
-      // Set up ongoing analysis
-      const checkAudio = () => {
+      // Set up continuous analysis
+      if (audioLevelIntervalRef.current) {
+        clearInterval(audioLevelIntervalRef.current);
+      }
+      
+      audioLevelIntervalRef.current = window.setInterval(() => {
         if (autoDetectVoice) {
           detectSpeech();
+        } else if (isListening) {
+          // Still update audio levels when manually recording
+          if (analyserRef.current && audioDataRef.current) {
+            analyserRef.current.getByteFrequencyData(audioDataRef.current);
+            const average = audioDataRef.current.reduce((sum, value) => sum + value, 0) / audioDataRef.current.length;
+            const normalizedLevel = Math.min(1, Math.max(0, average / 128));
+            setAudioLevel(normalizedLevel);
+            
+            if (onAudioLevelChange) {
+              onAudioLevelChange(normalizedLevel);
+            }
+          }
         }
-        requestAnimationFrame(checkAudio);
-      };
+      }, 100) as unknown as number;
       
-      checkAudio();
       setHasPermission(true);
       
     } catch (error) {
@@ -94,12 +120,10 @@ export const useAudioRecording = ({
       setHasPermission(false);
       toast.error('Ekki tókst að fá aðgang að hljóðnema fyrir raddgreiningu.');
     }
-  }, [autoDetectVoice, detectSpeech]);
+  }, [autoDetectVoice, detectSpeech, isListening, onAudioLevelChange]);
 
   useEffect(() => {
-    if (autoDetectVoice) {
-      initializeVoiceDetection();
-    }
+    initializeVoiceDetection();
     
     return () => {
       // Clean up resources
@@ -108,6 +132,9 @@ export const useAudioRecording = ({
       }
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
+      }
+      if (audioLevelIntervalRef.current) {
+        clearInterval(audioLevelIntervalRef.current);
       }
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -264,6 +291,7 @@ export const useAudioRecording = ({
     toggleRecording,
     startRecording,
     stopRecording,
-    hasPermission
+    hasPermission,
+    audioLevel
   };
 };

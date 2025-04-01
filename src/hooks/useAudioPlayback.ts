@@ -35,7 +35,7 @@ export const useAudioPlayback = () => {
       const voice = message.gender === 'female' ? 'nova' : 'onyx';
       
       // Instructions for 60s operator style with Knight Rider flair
-      const instructions = "The voice should speak with the formal, clear diction of a 1960s telephone operator or mission control technician. Pronounce Icelandic characters like þ, ð, æ, etc. correctly. Add subtle electronic processing to the voice, reminiscent of the computer voice from Knight Rider - professional but with a hint of futuristic technology. Speak at a measured pace with crisp articulation.";
+      const instructions = "Speak in the style of a 1960s telephone operator or mission control technician with subtle electronic processing reminiscent of Knight Rider's computer voice. Professional, clear and futuristic.";
       
       const audioData = await getTextToSpeech(message.text, voice, instructions);
       const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
