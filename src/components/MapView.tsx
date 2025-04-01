@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCurrentLocation } from '@/services/mapsService';
-import { MapPin, Navigation, Search, Bus, Car, Bike, Person } from 'lucide-react';
+import { MapPin, Navigation, Search, Bus, Car, Bike, User } from 'lucide-react';
 
-// Define types for props
 interface MapViewProps {
   initialLat?: number;
   initialLng?: number;
@@ -18,7 +16,6 @@ interface MapViewProps {
   onLocationSelected?: (lat: number, lng: number, address?: string) => void;
 }
 
-// Mock map component (replace with actual Google Maps integration)
 const MapView: React.FC<MapViewProps> = ({
   initialLat = 64.1466,
   initialLng = -21.9426,
@@ -36,28 +33,21 @@ const MapView: React.FC<MapViewProps> = ({
   const [destinationAddress, setDestinationAddress] = useState<string>('');
   const [directionSteps, setDirectionSteps] = useState<Array<{ instruction: string; distance: string; duration: string }>>([]);
 
-  // Effect to initialize map (simulated)
   useEffect(() => {
     if (mapRef.current) {
-      // In a real implementation, this would initialize the Google Maps API
       console.log(`Initializing map at [${center.lat}, ${center.lng}] with zoom ${zoom}`);
-      
-      // Simulate map loading
       setTimeout(() => {
         setMapLoaded(true);
       }, 500);
     }
   }, []);
 
-  // Effect to update map when center or zoom changes (simulated)
   useEffect(() => {
     if (mapLoaded) {
       console.log(`Moving map to [${center.lat}, ${center.lng}] with zoom ${zoom}`);
-      // In a real implementation, this would update the Google Map
     }
   }, [center, zoom, mapLoaded]);
 
-  // Handler for getting current location
   const handleGetCurrentLocation = async () => {
     const location = await getCurrentLocation();
     if (location) {
@@ -70,13 +60,9 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  // Handler for search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulated search - in real implementation, this would use Google Places API
     console.log(`Searching for: ${searchQuery}`);
-    
-    // Mock search result - random location near Reykjavik
     const randomOffset = () => (Math.random() - 0.5) * 0.02;
     const searchResult = {
       lat: 64.1466 + randomOffset(),
@@ -92,14 +78,9 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  // Handler for directions search
   const handleDirectionsSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simulated directions - in real implementation, this would use Google Directions API
     console.log(`Getting directions to: ${destinationAddress} via ${transportMode}`);
-    
-    // Mock directions result
     const mockDirections = [
       { instruction: "Head south on Laugavegur", distance: "300 m", duration: "1 min" },
       { instruction: "Turn right onto Snorrabraut", distance: "700 m", duration: "2 mins" },
@@ -110,11 +91,10 @@ const MapView: React.FC<MapViewProps> = ({
     setDirectionSteps(mockDirections);
   };
 
-  // Transport mode icon
   const getTransportIcon = () => {
     switch (transportMode) {
       case 'driving': return <Car size={16} />;
-      case 'walking': return <Person size={16} />;
+      case 'walking': return <User size={16} />;
       case 'bicycling': return <Bike size={16} />;
       case 'transit': return <Bus size={16} />;
       default: return <Car size={16} />;
@@ -217,12 +197,10 @@ const MapView: React.FC<MapViewProps> = ({
           </div>
         )}
         
-        {/* Center pin marker */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary">
           <MapPin size={36} className="animate-bounce" />
         </div>
         
-        {/* Map attribution */}
         <div className="absolute bottom-1 right-1 text-xs text-muted-foreground bg-background/80 px-1 rounded">
           Map data © {new Date().getFullYear()}
         </div>

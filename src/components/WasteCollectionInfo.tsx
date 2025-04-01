@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -59,7 +58,6 @@ const WasteCollectionInfo: React.FC<WasteCollectionInfoProps> = ({
       });
   };
 
-  // Format day name for the next collection
   const getNextCollectionDayInfo = () => {
     if (!schedule || !schedule.nextCollection.date) return null;
     
@@ -72,13 +70,12 @@ const WasteCollectionInfo: React.FC<WasteCollectionInfoProps> = ({
 
   const nextCollectionInfo = getNextCollectionDayInfo();
 
-  // Get waste type color
   const getWasteTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "general waste": return "destructive";
       case "recycling": return "default";
-      case "organic waste": return "green";
-      case "paper waste": return "blue";
+      case "organic waste": return "secondary";
+      case "paper waste": return "default";
       default: return "secondary";
     }
   };
@@ -173,7 +170,6 @@ const WasteCollectionInfo: React.FC<WasteCollectionInfoProps> = ({
             <TabsContent value="schedule" className="pt-4">
               <div className="space-y-4">
                 {Object.entries(schedule.schedule).map(([wasteType, days]) => {
-                  // Convert camelCase to Title Case
                   const formattedType = wasteType
                     .replace(/([A-Z])/g, ' $1')
                     .replace(/^./, str => str.toUpperCase());
@@ -192,9 +188,9 @@ const WasteCollectionInfo: React.FC<WasteCollectionInfoProps> = ({
                           <span className="font-medium">{formattedType}</span>
                         </div>
                         <Badge variant={
-                          wasteType.includes("organic") ? "green" : 
+                          wasteType.includes("organic") ? "secondary" : 
                           wasteType.includes("recycling") ? "default" :
-                          wasteType.includes("paper") ? "blue" : 
+                          wasteType.includes("paper") ? "default" : 
                           "secondary"
                         }>
                           {days.length} days

@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getTextToSpeech } from '@/services/openAiService';
-import { getCurrentTime, formatIcelandicDate } from '@/services/timeService';
+import { getCurrentTime, formatIcelandicDate, getIcelandicDayName, getIcelandicMonthName, getTimeBasedGreeting } from '@/services/timeService';
 import { toast } from "sonner";
 
 /**
@@ -39,6 +39,14 @@ export const addTimeContext = async (): Promise<TimeInfo | null> => {
     // Get time locally first
     const localTime = getCurrentTime();
     
+    // Add missing properties to meet TimeInfo interface
+    const enhancedLocalTime: TimeInfo = {
+      ...localTime,
+      dayName: getIcelandicDayName(localTime.dayOfWeek),
+      monthName: getIcelandicMonthName(localTime.month),
+      greeting: getTimeBasedGreeting()
+    };
+    
     // Then try to get time from edge function for more accuracy
     try {
       const { data, error } = await supabase.functions.invoke('contextual-data', {
@@ -50,13 +58,13 @@ export const addTimeContext = async (): Promise<TimeInfo | null> => {
       
       if (error) {
         console.error('Error getting time from edge function:', error);
-        return localTime;
+        return enhancedLocalTime;
       }
       
       return data;
     } catch (error) {
       console.error('Failed to get time from edge function:', error);
-      return localTime;
+      return enhancedLocalTime;
     }
   } catch (error) {
     console.error('Error adding time context:', error);
