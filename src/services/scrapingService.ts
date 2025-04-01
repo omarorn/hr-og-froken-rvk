@@ -165,24 +165,31 @@ export const scrapingService = {
    */
   async saveScrapedData(url: string, scrapedData: any): Promise<ScrapedDataRecord | null> {
     try {
-      // Use rpc function to insert data
-      const { data, error } = await supabase.rpc('insert_scraped_data', {
-        p_url: url,
-        p_domain: scrapedData.domain,
-        p_pages_scraped: scrapedData.pagesScraped,
-        p_data: scrapedData.data
-      });
-      
-      if (error) {
-        console.error('Error saving scraped data:', error);
+      // Try to use the stored procedure first
+      try {
+        const { data, error } = await supabase.rpc('insert_scraped_data', {
+          p_url: url,
+          p_domain: scrapedData.domain,
+          p_pages_scraped: scrapedData.pagesScraped,
+          p_data: scrapedData.data
+        }) as { data: ScrapedDataRecord | null, error: any };
         
-        // Fall back to direct insert if RPC doesn't exist
+        if (!error && data) {
+          return data;
+        }
+        
+        throw new Error("RPC failed or returned no data");
+      } catch (rpcError) {
+        console.log('RPC method failed, falling back to direct insert:', rpcError);
+        
+        // Fall back to direct insert if RPC doesn't exist or fails
         const insertResult = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
             'apikey': SUPABASE_PUBLIC_KEY,
+            'Prefer': 'return=representation'
           },
           body: JSON.stringify({
             url,
@@ -200,8 +207,6 @@ export const scrapingService = {
         const insertData = await insertResult.json();
         return insertData[0] as ScrapedDataRecord;
       }
-      
-      return data as ScrapedDataRecord;
     } catch (error) {
       console.error('Error in saveScrapedData:', error);
       return null;
