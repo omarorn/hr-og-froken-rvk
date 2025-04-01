@@ -11,9 +11,11 @@
 - [x] Implement message service for conversation management
 - [x] Create UI for voice assistant interface
 - [x] Add gender toggle for assistant (Rósa/Birkir)
+- [x] Fix transcription issues in audio recording workflow
 
 ## Backlog
-- [ ] Add more robust error handling for voice recording
+- [x] Add more robust error handling for voice recording
+- [x] Refactor large components into smaller focused files
 - [ ] Improve loading states and user feedback
 - [ ] Optimize audio processing for better performance
 - [ ] Add session persistence for conversations
@@ -24,8 +26,11 @@
 
 ## Discovered During Work
 - [x] Fix transcription issues in audio recording workflow
-- [ ] Refactor large components into smaller focused files
-- [ ] Improve logging for better debugging
+- [x] Refactor large components into smaller focused files
+- [x] Improve logging for better debugging
+- [ ] Add timeout handling for long recordings
+- [ ] Implement better error recovery for failed transcriptions
+- [ ] Add visual feedback for voice levels during recording
 
 ## Milestones
 - [x] Initial prototype with basic voice interaction

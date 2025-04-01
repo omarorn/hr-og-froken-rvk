@@ -1,9 +1,8 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import VoiceButton from './VoiceButton';
-import MessageBubble from './MessageBubble';
+import React, { useEffect, useState } from 'react';
 import AssistantProfile from './AssistantProfile';
-import VoiceVisualizer from './VoiceVisualizer';
+import ConversationHistory from './ConversationHistory';
+import VoiceControlPanel from './VoiceControlPanel';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 import { useMessageService } from '@/services/messageService';
@@ -18,7 +17,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   assistantName = 'Rósa', 
   gender = 'female' 
 }) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageService = useMessageService(gender);
   const { messages, isProcessing, setIsProcessing, handleUserMessage } = messageService;
   const [lastTranscribedText, setLastTranscribedText] = useState<string>('');
@@ -57,7 +55,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
   const { isListening, transcribedText, toggleRecording } = useAudioRecording({
     onTranscriptionComplete: handleTranscriptionComplete,
-    onProcessingStateChange: setIsProcessing
+    onProcessingStateChange: setIsProcessing,
+    onTranscriptionError: handleTranscriptionError
   });
 
   useEffect(() => {
@@ -70,12 +69,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       const greeting = messageService.setInitialGreeting(initialGreeting);
       speakMessage(greeting);
     }, 1000);
-  }, [gender]);
-
-  useEffect(() => {
-    // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [gender, messageService, speakMessage]);
 
   const handleVoiceButtonClick = () => {
     if (!isListening && !isProcessing) {
@@ -103,45 +97,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           )}
         </div>
         
-        <div className="h-96 md:h-[420px] overflow-y-auto p-6 space-y-4 bg-iceland-gray/30">
-          {messages.map((message) => (
-            <MessageBubble 
-              key={message.id}
-              message={message.text}
-              isUser={message.isUser}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+        <ConversationHistory messages={messages} />
         
-        <div className="p-6 border-t border-iceland-blue/10 flex flex-col items-center">
-          {isProcessing && transcribedText && (
-            <div className="mb-4 text-center">
-              <div className="text-sm font-medium text-iceland-darkGray">Uppritaður texti:</div>
-              <div className="text-iceland-darkBlue italic">{transcribedText}</div>
-            </div>
-          )}
-          
-          {!isProcessing && lastTranscribedText && (
-            <div className="mb-4 text-center">
-              <div className="text-sm font-medium text-iceland-darkGray">Síðasti uppritaði texti:</div>
-              <div className="text-iceland-darkBlue italic">{lastTranscribedText}</div>
-            </div>
-          )}
-          
-          <div className="flex items-center">
-            {isSpeaking && (
-              <div className="mr-4">
-                <VoiceVisualizer isActive={isSpeaking} />
-              </div>
-            )}
-            <VoiceButton 
-              isListening={isListening} 
-              isProcessing={isProcessing}
-              onClick={handleVoiceButtonClick} 
-            />
-          </div>
-        </div>
+        <VoiceControlPanel 
+          isListening={isListening}
+          isProcessing={isProcessing}
+          isSpeaking={isSpeaking}
+          transcribedText={transcribedText}
+          lastTranscribedText={lastTranscribedText}
+          onButtonClick={handleVoiceButtonClick}
+        />
       </div>
       
       <div className="mt-8 text-center text-sm text-iceland-darkGray">
