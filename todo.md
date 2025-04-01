@@ -1,35 +1,35 @@
 # Documentation Tasks
 
 ## Project Overview
-- [ ] Create README with project description
-- [ ] Document technology stack
+- [x] Create README with project description
+- [x] Document technology stack
 - [ ] Add architecture diagram
 
 ## Core Components
-- [ ] Document App component structure
-- [ ] Document routing setup
-- [ ] Document state management (React Query)
+- [x] Document App component structure
+- [x] Document routing setup
+- [x] Document state management (React Query)
 
 ## UI Components
-- [ ] Document shadcn/ui component usage
-- [ ] Document custom components:
-  - [ ] VoiceAssistant
-  - [ ] VoiceButton
-  - [ ] VoiceVisualizer
-  - [ ] ApiKeyModal
+- [x] Document shadcn/ui component usage
+- [x] Document custom components:
+  - [x] VoiceAssistant
+  - [x] VoiceButton
+  - [x] VoiceVisualizer
+  - [x] ApiKeyModal
 
 ## Services
-- [ ] Document openAiService
+- [x] Document openAiService
 
 ## Configuration
-- [ ] Document Vite setup
-- [ ] Document Tailwind configuration
-- [ ] Document TypeScript setup
+- [x] Document Vite setup
+- [x] Document Tailwind configuration
+- [x] Document TypeScript setup
 
 ## Development
-- [ ] Document scripts in package.json
-- [ ] Document ESLint setup
-- [ ] Document PostCSS setup
+- [x] Document scripts in package.json
+- [x] Document ESLint setup
+- [x] Document PostCSS setup
 
 ## Reykjavík Open Data Portal Reference
 This section catalogs available resources from [Reykjavík's open data portal](https://gagnahladbord.reykjavik.is/).

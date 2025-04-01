@@ -7,6 +7,7 @@ import VoiceControlPanel from '../VoiceControlPanel';
 import VideoChat from '../VideoChat';
 import { Message } from '@/services/messageService';
 import { ConversationScenario } from '@/services/chatService';
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
 
 interface AssistantContainerProps {
   assistantName: string;
@@ -15,6 +16,7 @@ interface AssistantContainerProps {
   isSpeaking: boolean;
   isListening: boolean;
   isProcessing: boolean;
+  isGreetingLoading: boolean; // Add prop for greeting loading state
   autoDetectVoice: boolean;
   showVideoChat: boolean;
   audioLevel: number;
@@ -35,6 +37,7 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
   isSpeaking,
   isListening,
   isProcessing,
+  isGreetingLoading, // Destructure the new prop
   autoDetectVoice,
   showVideoChat,
   audioLevel,
@@ -142,7 +145,13 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
         </div>
       )}
       
-      <ConversationHistory messages={messages} />
+      {isGreetingLoading && messages.length === 0 ? (
+        <div className="p-6 h-96 flex items-center justify-center">
+          <Skeleton className="h-10 w-40" />
+        </div>
+      ) : (
+        <ConversationHistory messages={messages} />
+      )}
       
       <VoiceControlPanel 
         isListening={isListening}

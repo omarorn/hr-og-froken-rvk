@@ -1,7 +1,7 @@
 
 import React from 'react';
 import VoiceVisualizer from './VoiceVisualizer';
-import { Mic, Headphones, Send } from 'lucide-react';
+import { Mic, Headphones, Send, Loader2 } from 'lucide-react'; // Import Loader2
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { ConversationScenario } from '@/services/chatService';
@@ -115,7 +115,11 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
             size="icon"
             className="self-end h-10 w-10"
           >
-            <Send className="h-5 w-5" />
+            {isProcessing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
           </Button>
         </div>
         

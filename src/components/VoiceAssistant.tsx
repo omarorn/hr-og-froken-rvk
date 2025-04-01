@@ -113,13 +113,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
   return (
     <BackgroundContainer currentScenario={currentScenario}>
-      <AssistantContainer 
+      <AssistantContainer
         assistantName={assistantName}
         gender={gender}
         messages={messages}
         isSpeaking={isSpeaking}
         isListening={isListening}
         isProcessing={isProcessing}
+        isGreetingLoading={isGreetingLoading} // Pass greeting loading state
         autoDetectVoice={autoDetectVoice}
         showVideoChat={showVideoChat}
         audioLevel={audioLevel}
