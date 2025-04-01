@@ -1,3 +1,4 @@
+
 import { supabase, ScrapedDataRecord, SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from "@/integrations/supabase/client";
 
 /**
@@ -21,8 +22,8 @@ export const databaseService = {
           p_data: scrapedData.data
         };
         
-        // Use the generic type argument correctly for the rpc method
-        const { data, error } = await supabase.rpc('insert_scraped_data', params);
+        // Fix the typing issue by using any as the generic type
+        const { data, error } = await supabase.rpc<any>('insert_scraped_data', params);
         
         if (!error && data) {
           return data as ScrapedDataRecord;
