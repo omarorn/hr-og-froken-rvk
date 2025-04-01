@@ -28,6 +28,9 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
     
+    // Use default FM DJ instructions if none provided
+    const defaultInstructions = "Speak in the style of a 1960s telephone operator or mission control technician with subtle electronic processing reminiscent of Knight Rider's computer voice. Professional, clear and futuristic. Use clear Icelandic pronunciation for characters like þ, ð, æ.";
+    
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -38,7 +41,7 @@ serve(async (req) => {
         model: 'gpt-4o-mini-tts',
         voice: voice || 'coral',
         input: text,
-        instructions: instructions || "Speak in the style of a 1960s telephone operator or mission control technician with subtle electronic processing reminiscent of Knight Rider's computer voice. Professional, clear and futuristic.",
+        instructions: instructions || defaultInstructions,
         response_format: 'mp3'
       })
     });

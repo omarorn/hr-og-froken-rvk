@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import AssistantContainer from './voice/AssistantContainer';
 import Footer from './voice/Footer';
 import MicrophonePermissionDialog from './voice/MicrophonePermissionDialog';
+import { ConversationScenario } from '@/services/chatService';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -19,7 +20,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   gender = 'female' 
 }) => {
   const messageService = useMessageService(gender);
-  const { messages, isProcessing, setIsProcessing, handleUserMessage, setInitialGreeting } = messageService;
+  const { 
+    messages, 
+    isProcessing, 
+    setIsProcessing, 
+    handleUserMessage, 
+    setInitialGreeting,
+    currentScenario 
+  } = messageService;
+  
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
   const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(false);
   const [showVideoChat, setShowVideoChat] = useState<boolean>(false);
@@ -83,12 +92,26 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     language: 'is' // Always use Icelandic
   });
 
+  // Get greeting based on time of day
+  const getTimeBasedGreeting = (): string => {
+    const hour = new Date().getHours();
+    const name = gender === 'female' ? 'Rósa' : 'Birkir';
+    
+    if (hour >= 5 && hour < 12) {
+      return `Góðan morgun, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+    } else if (hour >= 12 && hour < 18) {
+      return `Góðan dag, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+    } else if (hour >= 18 && hour < 22) {
+      return `Gott kvöld, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+    } else {
+      return `Góða nótt, ég heiti ${name}. Hvernig get ég aðstoðað þig?`;
+    }
+  };
+
   useEffect(() => {
     // Load initial greeting only once
     if (!initialGreetingDone) {
-      const initialGreeting = gender === 'female' 
-        ? "Góðan dag, ég heiti Rósa. Hvernig get ég aðstoðað þig í dag?"
-        : "Góðan dag, ég heiti Birkir. Hvernig get ég aðstoðað þig í dag?";
+      const initialGreeting = getTimeBasedGreeting();
       
       setTimeout(() => {
         const greeting = setInitialGreeting(initialGreeting);
@@ -143,8 +166,26 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   const toggleVideoChat = () => setShowVideoChat(prev => !prev);
   const toggleSubtitles = () => setShowSubtitles(prev => !prev);
 
+  // Get animated background class based on current scenario
+  const getScenarioStyling = () => {
+    switch (currentScenario) {
+      case ConversationScenario.GREETING:
+        return "bg-gradient-to-br from-iceland-blue/10 to-iceland-lightBlue/20";
+      case ConversationScenario.HOLD:
+        return "bg-gradient-to-br from-iceland-lightBlue/10 to-iceland-gray/10";
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return "bg-gradient-to-br from-iceland-lightBlue/10 to-iceland-red/5";
+      case ConversationScenario.FOLLOW_UP:
+        return "bg-gradient-to-br from-iceland-blue/10 to-iceland-green/10";
+      case ConversationScenario.FAREWELL:
+        return "bg-gradient-to-br from-iceland-darkBlue/10 to-iceland-blue/10";
+      default:
+        return "bg-gradient-to-b from-iceland-blue/10 to-iceland-lightBlue/20";
+    }
+  };
+
   return (
-    <div className="voice-assistant-container min-h-screen flex flex-col items-center p-4 md:p-8">
+    <div className={`voice-assistant-container min-h-screen flex flex-col items-center p-4 md:p-8 transition-colors duration-1000 ${getScenarioStyling()}`}>
       <AssistantContainer 
         assistantName={assistantName}
         gender={gender}
@@ -162,6 +203,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         toggleVideoChat={toggleVideoChat}
         toggleSubtitles={toggleSubtitles}
         showSubtitles={showSubtitles}
+        currentScenario={currentScenario}
       />
       
       {showSubtitles && (

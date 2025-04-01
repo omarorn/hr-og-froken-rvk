@@ -6,6 +6,7 @@ import ConversationHistory from '../ConversationHistory';
 import VoiceControlPanel from '../VoiceControlPanel';
 import VideoChat from '../VideoChat';
 import { Message } from '@/services/messageService';
+import { ConversationScenario } from '@/services/chatService';
 
 interface AssistantContainerProps {
   assistantName: string;
@@ -24,6 +25,7 @@ interface AssistantContainerProps {
   toggleVideoChat: () => void;
   toggleSubtitles: () => void;
   showSubtitles: boolean;
+  currentScenario?: string;
 }
 
 const AssistantContainer: React.FC<AssistantContainerProps> = ({
@@ -42,16 +44,83 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
   toggleAutoDetectVoice,
   toggleVideoChat,
   toggleSubtitles,
-  showSubtitles
+  showSubtitles,
+  currentScenario = ConversationScenario.GENERAL
 }) => {
+  // Get container styling based on scenario
+  const getContainerStyling = () => {
+    const baseStyles = "w-full max-w-2xl backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border";
+    
+    switch (currentScenario) {
+      case ConversationScenario.GREETING:
+        return `${baseStyles} bg-white/70 border-iceland-blue/20`;
+      case ConversationScenario.HOLD:
+        return `${baseStyles} bg-white/80 border-iceland-lightBlue/30`;
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return `${baseStyles} bg-white/70 border-iceland-red/10`;
+      case ConversationScenario.FOLLOW_UP:
+        return `${baseStyles} bg-white/70 border-iceland-green/20`;
+      case ConversationScenario.FAREWELL:
+        return `${baseStyles} bg-white/70 border-iceland-darkBlue/20`;
+      default:
+        return `${baseStyles} bg-white/70 border-iceland-blue/20`;
+    }
+  };
+
+  // Get header styling based on scenario
+  const getHeaderStyling = () => {
+    const baseStyles = "p-6 border-b";
+    
+    switch (currentScenario) {
+      case ConversationScenario.GREETING:
+        return `${baseStyles} border-iceland-blue/10`;
+      case ConversationScenario.HOLD:
+        return `${baseStyles} border-iceland-lightBlue/20`;
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return `${baseStyles} border-iceland-red/10`;
+      case ConversationScenario.FOLLOW_UP:
+        return `${baseStyles} border-iceland-green/20`;
+      case ConversationScenario.FAREWELL:
+        return `${baseStyles} border-iceland-darkBlue/10`;
+      default:
+        return `${baseStyles} border-iceland-blue/10`;
+    }
+  };
+
+  // Get scenario badge text
+  const getScenarioBadge = () => {
+    switch (currentScenario) {
+      case ConversationScenario.GREETING:
+        return "Ávarp";
+      case ConversationScenario.HOLD:
+        return "Í bið";
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return "Tækniaðstoð";
+      case ConversationScenario.FOLLOW_UP:
+        return "Upplýsingar";
+      case ConversationScenario.FAREWELL:
+        return "Kveðja";
+      default:
+        return "Almenn";
+    }
+  };
+
   return (
-    <div className="w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-iceland-blue/20">
-      <div className="p-6 border-b border-iceland-blue/10 flex justify-between items-center">
-        <AssistantProfile 
-          name={assistantName} 
-          isActive={isSpeaking}
-          gender={gender}
-        />
+    <div className={getContainerStyling()}>
+      <div className={`${getHeaderStyling()} flex justify-between items-center`}>
+        <div className="flex flex-col space-y-1">
+          <AssistantProfile 
+            name={assistantName} 
+            isActive={isSpeaking}
+            gender={gender}
+          />
+          
+          <div className="flex items-center">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-iceland-blue/10 text-iceland-blue">
+              {getScenarioBadge()}
+            </span>
+          </div>
+        </div>
         
         <SettingsPanel 
           autoDetectVoice={autoDetectVoice}
@@ -84,6 +153,7 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
         onSendMessage={onSendMessage}
         autoDetectVoice={autoDetectVoice}
         audioLevel={audioLevel}
+        scenario={currentScenario}
       />
     </div>
   );

@@ -8,6 +8,7 @@ interface Message {
   isUser: boolean;
   id: number;
   gender?: 'female' | 'male';
+  scenario?: string;
 }
 
 export const useAudioPlayback = () => {
@@ -50,10 +51,15 @@ export const useAudioPlayback = () => {
       // Select voice based on gender
       const voice = message.gender === 'female' ? 'nova' : 'onyx';
       
-      // Instructions for 60s operator style with Knight Rider flair
-      const instructions = "Speak in the style of a 1960s telephone operator or mission control technician with subtle electronic processing reminiscent of Knight Rider's computer voice. Professional, clear and futuristic.";
+      // Instructions will be determined by the scenario in the openAiService
+      const audioData = await getTextToSpeech(
+        message.text, 
+        voice, 
+        undefined, 
+        message.scenario, 
+        message.gender
+      );
       
-      const audioData = await getTextToSpeech(message.text, voice, instructions);
       const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       

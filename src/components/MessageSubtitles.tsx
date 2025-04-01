@@ -8,13 +8,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Languages } from 'lucide-react';
+import { ConversationScenario } from '@/services/chatService';
 
 interface MessageSubtitlesProps {
   text: string;
   isActive: boolean;
+  scenario?: string;
 }
 
-const MessageSubtitles: React.FC<MessageSubtitlesProps> = ({ text, isActive }) => {
+const MessageSubtitles: React.FC<MessageSubtitlesProps> = ({ 
+  text, 
+  isActive,
+  scenario = ConversationScenario.GENERAL
+}) => {
   const [language, setLanguage] = useState<string>("is");
   const [translatedText, setTranslatedText] = useState<string>(text);
   
@@ -40,11 +46,49 @@ const MessageSubtitles: React.FC<MessageSubtitlesProps> = ({ text, isActive }) =
     }
   }, [text, language]);
   
+  // Get container styling based on scenario
+  const getSubtitleStyling = () => {
+    const baseStyles = "p-3 rounded-lg max-w-3xl mx-auto backdrop-blur-sm shadow-lg subtitle-box pointer-events-auto";
+    
+    switch (scenario) {
+      case ConversationScenario.GREETING:
+        return `${baseStyles} bg-black/80 text-white`;
+      case ConversationScenario.HOLD:
+        return `${baseStyles} bg-gray-800/85 text-white`;
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return `${baseStyles} bg-gray-900/85 text-white`;
+      case ConversationScenario.FOLLOW_UP:
+        return `${baseStyles} bg-black/85 text-white`;
+      case ConversationScenario.FAREWELL:
+        return `${baseStyles} bg-gray-800/80 text-white`;
+      default:
+        return `${baseStyles} bg-black/80 text-white`;
+    }
+  };
+
+  // Get animation progress color based on scenario
+  const getProgressColor = () => {
+    switch (scenario) {
+      case ConversationScenario.GREETING:
+        return "bg-blue-500";
+      case ConversationScenario.HOLD:
+        return "bg-gray-400";
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return "bg-red-500";
+      case ConversationScenario.FOLLOW_UP:
+        return "bg-green-500";
+      case ConversationScenario.FAREWELL:
+        return "bg-indigo-500";
+      default:
+        return "bg-blue-500";
+    }
+  };
+  
   if (!isActive) return null;
   
   return (
     <div className="subtitle-container fixed bottom-0 left-0 right-0 p-4 flex justify-center items-center z-20 pointer-events-none">
-      <div className="bg-black/80 text-white p-3 rounded-lg max-w-3xl mx-auto backdrop-blur-sm shadow-lg subtitle-box pointer-events-auto">
+      <div className={getSubtitleStyling()}>
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
@@ -73,7 +117,7 @@ const MessageSubtitles: React.FC<MessageSubtitlesProps> = ({ text, isActive }) =
         </p>
         
         <div className="h-1 w-full bg-gray-700 mt-2 rounded overflow-hidden">
-          <div className="h-full bg-blue-500 rounded animate-[subtitleProgress_4s_ease-in-out_infinite]"></div>
+          <div className={`h-full ${getProgressColor()} rounded animate-[subtitleProgress_4s_ease-in-out_infinite]`}></div>
         </div>
       </div>
     </div>

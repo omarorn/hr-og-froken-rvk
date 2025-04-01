@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { sendChatMessage } from '@/services/chatService';
+import { sendChatMessage, ConversationScenario } from '@/services/chatService';
 import { toast } from 'sonner';
 
 export interface Message {
@@ -8,19 +8,26 @@ export interface Message {
   isUser: boolean;
   id: number;
   gender?: 'female' | 'male';
+  scenario?: string;
 }
 
 export const useMessageService = (gender: 'female' | 'male' = 'female') => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentScenario, setCurrentScenario] = useState<string>(ConversationScenario.GREETING);
 
-  const addMessage = (text: string, isUser: boolean) => {
+  const addMessage = (text: string, isUser: boolean, scenario?: string) => {
     const newMessage = {
       text,
       isUser,
       id: Date.now(),
-      gender: isUser ? undefined : gender
+      gender: isUser ? undefined : gender,
+      scenario: isUser ? undefined : scenario
     };
+    
+    if (!isUser && scenario) {
+      setCurrentScenario(scenario);
+    }
     
     setMessages(prev => [...prev, newMessage]);
     return newMessage;
@@ -44,10 +51,10 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
       
       // Send the message to OpenAI
       const response = await sendChatMessage(text, conversationHistory);
-      console.log('AI response:', response.text);
+      console.log('AI response:', response.text, 'Scenario:', response.scenario);
       
-      // Add assistant response
-      const assistantMessage = addMessage(response.text, false);
+      // Add assistant response with scenario
+      const assistantMessage = addMessage(response.text, false, response.scenario);
       setIsProcessing(false);
       
       return assistantMessage;
@@ -64,7 +71,8 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
       text: initialMessage,
       isUser: false,
       id: Date.now(),
-      gender
+      gender,
+      scenario: ConversationScenario.GREETING
     };
     
     setMessages([greeting]);
@@ -77,6 +85,7 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
     setIsProcessing,
     addMessage,
     handleUserMessage,
-    setInitialGreeting
+    setInitialGreeting,
+    currentScenario
   };
 };

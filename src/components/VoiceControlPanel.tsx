@@ -4,6 +4,7 @@ import VoiceVisualizer from './VoiceVisualizer';
 import { Mic, Headphones, Send } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { ConversationScenario } from '@/services/chatService';
 
 interface VoiceControlPanelProps {
   isListening: boolean;
@@ -14,6 +15,7 @@ interface VoiceControlPanelProps {
   onSendMessage: () => void;
   autoDetectVoice?: boolean;
   audioLevel?: number;
+  scenario?: string;
 }
 
 const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
@@ -24,7 +26,8 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
   onTranscribedTextChange,
   onSendMessage,
   autoDetectVoice = false,
-  audioLevel = 0
+  audioLevel = 0,
+  scenario = ConversationScenario.GENERAL
 }) => {
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onTranscribedTextChange(e.target.value);
@@ -37,8 +40,46 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
     }
   };
 
+  // Get textarea placeholder based on scenario
+  const getPlaceholder = () => {
+    switch (scenario) {
+      case ConversationScenario.GREETING:
+        return "Svaraðu ávarpinu eða spyrðu um aðstoð...";
+      case ConversationScenario.HOLD:
+        return "Segðu hvað þú þarft aðstoð með...";
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return "Lýstu tæknilega vandamálinu þínu...";
+      case ConversationScenario.FOLLOW_UP:
+        return "Þarftu frekari upplýsingar? Spurðu hér...";
+      case ConversationScenario.FAREWELL:
+        return "Ertu með fleiri spurningar áður en þú lýkur?";
+      default:
+        return "Skrifaðu eða talaðu til að spyrja...";
+    }
+  };
+
+  // Get styling for control panel based on scenario
+  const getPanelStyling = () => {
+    const baseStyles = "p-6 border-t";
+    
+    switch (scenario) {
+      case ConversationScenario.GREETING:
+        return `${baseStyles} border-iceland-blue/10`;
+      case ConversationScenario.HOLD:
+        return `${baseStyles} border-iceland-lightBlue/20`;
+      case ConversationScenario.TECHNICAL_SUPPORT:
+        return `${baseStyles} border-iceland-red/10`;
+      case ConversationScenario.FOLLOW_UP:
+        return `${baseStyles} border-iceland-green/20`;
+      case ConversationScenario.FAREWELL:
+        return `${baseStyles} border-iceland-darkBlue/10`;
+      default:
+        return `${baseStyles} border-iceland-blue/10`;
+    }
+  };
+
   return (
-    <div className="p-6 border-t border-iceland-blue/10 flex flex-col items-center">
+    <div className={`${getPanelStyling()} flex flex-col items-center`}>
       <div className="w-full mb-4">
         <div className="flex mb-2">
           {isSpeaking && (
@@ -64,7 +105,7 @@ const VoiceControlPanel: React.FC<VoiceControlPanelProps> = ({
             value={transcribedText}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
-            placeholder="Skrifaðu eða talaðu til að spyrja..."
+            placeholder={getPlaceholder()}
             className="resize-none min-h-[80px]"
             disabled={isProcessing}
           />
