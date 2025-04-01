@@ -1,3 +1,13 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "supabase": {
+      "serverUrl": "ws://localhost:8000",
+      "tools": [
+        "read_rows",
+        "create_record"
+      ],
+      "description": "Custom Supabase MCP server for database operations",
+      "dockerImage": "mcp/supabase"
+    }
+  }
 }

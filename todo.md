@@ -31,6 +31,15 @@
 - [x] Document ESLint setup
 - [x] Document PostCSS setup
 
+## MCP Server Tasks
+- [x] Install required MCP servers (@block/code-mcp, @rishipradeep-think41/gsuite-mcp)
+- [x] Create custom Supabase MCP server
+- [x] Configure MCP servers in .roo/mcp.json
+- [ ] Test MCP server integration with voice assistant
+- [ ] Create unit tests for MCP server tools
+- [ ] Add error handling for MCP server connections
+- [ ] Document MCP server usage in the application
+
 ## Reykjavík Open Data Portal Reference
 This section catalogs available resources from [Reykjavík's open data portal](https://gagnahladbord.reykjavik.is/).
 
