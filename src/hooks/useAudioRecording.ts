@@ -19,7 +19,6 @@ export const useAudioRecording = ({
   autoDetectVoice = false
 }: UseAudioRecordingProps) => {
   const [isListening, setIsListening] = useState(false);
-  const [transcribedText, setTranscribedText] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -31,6 +30,7 @@ export const useAudioRecording = ({
   const silenceTimeoutRef = useRef<number | null>(null);
   const isSpeakingRef = useRef<boolean>(false);
   const audioLevelIntervalRef = useRef<number | null>(null);
+  const processingRef = useRef<boolean>(false);
 
   // Function to detect if user is speaking
   const detectSpeech = useCallback(() => {
@@ -52,7 +52,7 @@ export const useAudioRecording = ({
     // Threshold for speech detection (adjust as needed)
     const threshold = 15;
     
-    if (average > threshold && !isSpeakingRef.current && !isListening) {
+    if (average > threshold && !isSpeakingRef.current && !isListening && !processingRef.current) {
       console.log('Speech detected, starting recording automatically');
       isSpeakingRef.current = true;
       startRecording();
@@ -115,6 +115,11 @@ export const useAudioRecording = ({
       
       setHasPermission(true);
       
+      // If autoDetectVoice is enabled, start analyzing immediately
+      if (autoDetectVoice) {
+        detectSpeech();
+      }
+      
     } catch (error) {
       console.error('Error accessing microphone for voice detection:', error);
       setHasPermission(false);
@@ -143,6 +148,8 @@ export const useAudioRecording = ({
   }, [autoDetectVoice, initializeVoiceDetection]);
 
   const startRecording = useCallback(async () => {
+    if (isListening || processingRef.current) return;
+    
     try {
       console.log('Requesting microphone access');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -163,10 +170,12 @@ export const useAudioRecording = ({
       };
       
       mediaRecorder.onstop = async () => {
+        processingRef.current = true;
+        setIsListening(false);
+        
         if (audioChunksRef.current.length === 0) {
           console.error('No audio data collected during recording');
-          toast.error('Engin hljóðgögn söfnuðust. Reyndu aftur.');
-          onProcessingStateChange(false);
+          processingRef.current = false;
           if (onTranscriptionError) onTranscriptionError();
           return;
         }
@@ -176,20 +185,17 @@ export const useAudioRecording = ({
         
         if (audioBlob.size < 100) {
           console.error('Audio blob too small, likely no audio recorded');
-          toast.error('Upptaka of stutt. Reyndu aftur og talaðu nær hljóðnemanum.');
-          onProcessingStateChange(false);
+          processingRef.current = false;
           if (onTranscriptionError) onTranscriptionError();
           return;
         }
         
         try {
           onProcessingStateChange(true);
-          setTranscribedText('Vinsamlegast bíðið, er að vinna úr hljóðupptöku...');
           
           // Set a timeout in case transcription takes too long
           const transcriptionTimeout = setTimeout(() => {
             console.warn('Transcription taking longer than expected');
-            setTranscribedText('Vinsamlegast bíðið, úrvinnsla tekur lengri tíma en búist var við...');
           }, 10000);
           
           // Transcribe the audio
@@ -198,48 +204,42 @@ export const useAudioRecording = ({
           
           console.log('Transcribed text:', transcribedText);
           
-          // Save the transcribed text
-          setTranscribedText(transcribedText);
-          
           if (transcribedText && transcribedText.trim()) {
             onTranscriptionComplete(transcribedText);
           } else {
             console.error('Empty transcription result');
-            toast.info('Ekkert tal greindist. Reyndu aftur.', { 
-              position: 'top-center',
-              duration: 2000
-            });
-            onProcessingStateChange(false);
             if (onTranscriptionError) onTranscriptionError();
           }
         } catch (error) {
           console.error('Error processing audio:', error);
           toast.error('Villa við vinnslu hljóðupptöku. Reyndu aftur.');
-          onProcessingStateChange(false);
           if (onTranscriptionError) onTranscriptionError();
+        } finally {
+          onProcessingStateChange(false);
+          processingRef.current = false;
         }
         
         // Stop all tracks in the stream
         stream.getTracks().forEach(track => track.stop());
       };
       
-      // Add a timeout to automatically stop recording after 30 seconds
+      // Add a timeout to automatically stop recording after 15 seconds
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
       
       recordingTimeoutRef.current = window.setTimeout(() => {
-        console.log('Recording timeout reached (30s), stopping automatically');
+        console.log('Recording timeout reached (15s), stopping automatically');
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-          toast.info('Upptöku lokið sjálfkrafa eftir 30 sekúndur', {
+          toast.info('Upptöku lokið sjálfkrafa eftir 15 sekúndur', {
             position: 'top-center',
             duration: 2000
           });
           stopRecording();
         }
-      }, 30000) as unknown as number;
+      }, 15000) as unknown as number;
       
-      // Start recording with a 10 second timeslice to get frequent ondataavailable events
+      // Start recording with a 1 second timeslice to get frequent ondataavailable events
       mediaRecorder.start(1000);
       setIsListening(true);
       
@@ -252,13 +252,12 @@ export const useAudioRecording = ({
       toast.error('Ekki tókst að hefja upptöku. Athugaðu að vefurinn hafi aðgang að hljóðnema.');
       if (onTranscriptionError) onTranscriptionError();
     }
-  }, [onProcessingStateChange, onTranscriptionComplete, onTranscriptionError]);
+  }, [isListening, onProcessingStateChange, onTranscriptionComplete, onTranscriptionError]);
   
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       console.log('Stopping recording...');
       mediaRecorderRef.current.stop();
-      setIsListening(false);
       
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
@@ -269,25 +268,19 @@ export const useAudioRecording = ({
         clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = null;
       }
-      
-      toast.info('Hætt að hlusta', { 
-        position: 'top-center', 
-        duration: 2000 
-      });
     }
   }, []);
 
   const toggleRecording = useCallback(() => {
-    if (!isListening) {
+    if (!isListening && !processingRef.current) {
       startRecording();
-    } else {
+    } else if (isListening) {
       stopRecording();
     }
   }, [isListening, startRecording, stopRecording]);
 
   return {
     isListening,
-    transcribedText,
     toggleRecording,
     startRecording,
     stopRecording,

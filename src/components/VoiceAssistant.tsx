@@ -23,52 +23,60 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 }) => {
   const messageService = useMessageService(gender);
   const { messages, isProcessing, setIsProcessing, handleUserMessage, setInitialGreeting } = messageService;
-  const [lastTranscribedText, setLastTranscribedText] = useState<string>('');
-  const [transcriptionErrors, setTranscriptionErrors] = useState<number>(0);
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
-  const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(false);
+  const [autoDetectVoice, setAutoDetectVoice] = useState<boolean>(true);
   const [showVideoChat, setShowVideoChat] = useState<boolean>(false);
   const [showSubtitles, setShowSubtitles] = useState<boolean>(true);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [activeSubtitleText, setActiveSubtitleText] = useState<string>("");
+  const [currentTranscribedText, setCurrentTranscribedText] = useState<string>("");
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
 
+  const handleTranscriptionUpdate = (text: string) => {
+    setCurrentTranscribedText(text);
+  };
+
   const handleTranscriptionComplete = async (transcribedText: string) => {
+    if (!transcribedText.trim()) return;
+    setCurrentTranscribedText(transcribedText);
+  };
+
+  const handleSendMessage = async () => {
+    if (!currentTranscribedText.trim() || isProcessing) return;
+    
     try {
-      setLastTranscribedText(transcribedText);
-      setTranscriptionErrors(0);
+      setIsProcessing(true);
+      console.log('Sending message to AI:', currentTranscribedText);
+      const assistantMessage = await handleUserMessage(currentTranscribedText);
       
-      console.log('Transcription completed, sending to AI:', transcribedText);
-      const assistantMessage = await handleUserMessage(transcribedText);
       if (assistantMessage && !hasError) {
         setActiveSubtitleText(assistantMessage.text);
         speakMessage(assistantMessage);
       }
+      
+      // Clear the input field after sending
+      setCurrentTranscribedText("");
     } catch (error) {
-      console.error('Error handling transcription:', error);
+      console.error('Error handling message:', error);
       toast.error('Villa kom upp við vinnslu fyrirspurnar. Reyndu aftur.');
+    } finally {
       setIsProcessing(false);
     }
   };
 
   const handleTranscriptionError = () => {
-    setTranscriptionErrors(prev => prev + 1);
-    
-    // If we've had multiple errors in a row, suggest troubleshooting
-    if (transcriptionErrors >= 2) {
-      toast.error(
-        'Endurtekinn vandi við að þekkja tal. Athugaðu hljóðnemann þinn og prófaðu að tala hærra og skýrar.',
-        { duration: 5000 }
-      );
-    }
+    toast.error(
+      'Vandi við að þekkja tal. Athugaðu hljóðnemann þinn og prófaðu að tala hærra og skýrar.',
+      { duration: 5000 }
+    );
   };
 
   const handleAudioLevelChange = (level: number) => {
     setAudioLevel(level);
   };
 
-  const { isListening, transcribedText, toggleRecording, hasPermission } = useAudioRecording({
+  const { isListening, hasPermission } = useAudioRecording({
     onTranscriptionComplete: handleTranscriptionComplete,
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
@@ -102,14 +110,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       }, 500);
     }
   }, [isSpeaking]);
-
-  const handleVoiceButtonClick = () => {
-    if (!isListening && !isProcessing) {
-      toggleRecording();
-    } else if (isListening) {
-      toggleRecording();
-    }
-  };
 
   const toggleAutoDetectVoice = () => {
     setAutoDetectVoice(prev => !prev);
@@ -187,9 +187,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           isListening={isListening}
           isProcessing={isProcessing}
           isSpeaking={isSpeaking}
-          transcribedText={transcribedText}
-          lastTranscribedText={lastTranscribedText}
-          onButtonClick={handleVoiceButtonClick}
+          transcribedText={currentTranscribedText}
+          onTranscribedTextChange={handleTranscriptionUpdate}
+          onSendMessage={handleSendMessage}
           autoDetectVoice={autoDetectVoice}
           audioLevel={audioLevel}
         />

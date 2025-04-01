@@ -18,9 +18,25 @@ export const useAudioPlayback = () => {
   // Initialize audio element
   useEffect(() => {
     audioRef.current = new Audio();
+    
+    // Add event listeners
+    if (audioRef.current) {
+      audioRef.current.onended = () => {
+        setIsSpeaking(false);
+      };
+      
+      audioRef.current.onerror = () => {
+        console.error('Audio playback error');
+        setIsSpeaking(false);
+        setHasError(true);
+      };
+    }
+    
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
       }
     };
   }, []);
@@ -42,16 +58,28 @@ export const useAudioPlayback = () => {
       const audioUrl = URL.createObjectURL(audioBlob);
       
       if (audioRef.current) {
+        // Pause and reset any current playback
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        
+        // Set new source
         audioRef.current.src = audioUrl;
         
+        // Add cleanup for when playback ends
+        const originalOnEnded = audioRef.current.onended;
         audioRef.current.onended = () => {
+          if (typeof originalOnEnded === 'function') {
+            originalOnEnded.call(audioRef.current);
+          }
           setIsSpeaking(false);
           URL.revokeObjectURL(audioUrl);
         };
         
+        // Begin playback
         audioRef.current.play().catch(error => {
           console.error('Audio playback error:', error);
           setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
         });
       }
     } catch (error) {
