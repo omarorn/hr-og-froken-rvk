@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getTextToSpeech } from '@/services/openAiService';
-import { getCurrentTime, formatIcelandicDate, getIcelandicDayName, getIcelandicMonthName, getTimeBasedGreeting } from '@/services/timeService';
+import { getCurrentTime, formatIcelandicDate, getIcelandicDayName, getIcelandicMonthName, getTimeBasedGreeting, getServerBasedTime } from '@/services/timeService';
 import { toast } from "sonner";
 
 /**
@@ -36,7 +36,10 @@ interface TimeInfo {
  */
 export const addTimeContext = async (): Promise<TimeInfo | null> => {
   try {
-    // Get time locally first
+    // First try to get time from the MCP server
+    const serverTime = await getServerBasedTime();
+    
+    // Get time locally as fallback or to enhance server time
     const localTime = getCurrentTime();
     
     // Add missing properties to meet TimeInfo interface
@@ -44,8 +47,15 @@ export const addTimeContext = async (): Promise<TimeInfo | null> => {
       ...localTime,
       dayName: getIcelandicDayName(localTime.dayOfWeek),
       monthName: getIcelandicMonthName(localTime.month),
-      greeting: getTimeBasedGreeting()
+      greeting: serverTime?.greeting || getTimeBasedGreeting()
     };
+    
+    // If we got server time, use its time of day and greeting
+    if (serverTime) {
+      enhancedLocalTime.timeOfDay = serverTime.timeOfDay;
+      enhancedLocalTime.greeting = serverTime.greeting;
+      console.log("Using server-based time and greeting:", serverTime);
+    }
     
     // Then try to get time from edge function for more accuracy
     try {

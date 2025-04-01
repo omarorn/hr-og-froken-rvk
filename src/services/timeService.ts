@@ -3,6 +3,10 @@
  * Service for time-related functionality
  */
 
+import { createSmitheryUrl } from "./smitheryService";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
 // Time zone for Iceland (always UTC+0)
 const ICELAND_TIMEZONE = "Atlantic/Reykjavik";
 
@@ -153,6 +157,58 @@ export const getTimeBasedGreeting = (): string => {
     return "Gott kvöld";
   } else {
     return "Góða nótt";
+  }
+};
+
+/**
+ * Get server-based time information using MCP server
+ * @returns Promise with accurate time information or null if error
+ */
+export const getServerBasedTime = async (): Promise<{
+  serverTime: string;
+  greeting: string;
+  timeOfDay: "morning" | "afternoon" | "evening" | "night";
+} | null> => {
+  try {
+    // Try to get time from MCP server through Smithery Registry
+    const { data, error } = await supabase.functions.invoke('time-mcp', {
+      body: { action: 'get-time' }
+    });
+    
+    if (error) {
+      console.error('Error getting time from MCP server:', error);
+      return null;
+    }
+    
+    const { hour, timeString } = data;
+    
+    // Determine time of day
+    let timeOfDay: "morning" | "afternoon" | "evening" | "night";
+    let greeting: string;
+    
+    if (hour >= 5 && hour < 12) {
+      timeOfDay = "morning";
+      greeting = "Góðan morgun";
+    } else if (hour >= 12 && hour < 18) {
+      timeOfDay = "afternoon";
+      greeting = "Góðan dag";
+    } else if (hour >= 18 && hour < 22) {
+      timeOfDay = "evening";
+      greeting = "Gott kvöld";
+    } else {
+      timeOfDay = "night";
+      greeting = "Góða nótt";
+    }
+    
+    return {
+      serverTime: timeString,
+      greeting,
+      timeOfDay
+    };
+  } catch (error) {
+    console.error('Failed to get server-based time:', error);
+    toast.error('Ekki tókst að sækja nákvæman tíma frá netþjóni');
+    return null;
   }
 };
 

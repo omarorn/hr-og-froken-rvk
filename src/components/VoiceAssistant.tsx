@@ -9,6 +9,7 @@ import AssistantContainer from './voice/AssistantContainer';
 import Footer from './voice/Footer';
 import MicrophonePermissionDialog from './voice/MicrophonePermissionDialog';
 import { ConversationScenario } from '@/services/chatService';
+import { getServerBasedTime } from '@/services/timeService';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -92,10 +93,23 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     language: 'is' // Always use Icelandic
   });
 
-  // Get greeting based on time of day
-  const getTimeBasedGreeting = (): string => {
-    const hour = new Date().getHours();
+  // Get greeting based on time of day using MCP server
+  const getAccurateTimeBasedGreeting = async (): Promise<string> => {
     const name = gender === 'female' ? 'Rósa' : 'Birkir';
+    
+    // First try to get an accurate greeting from MCP server
+    try {
+      const serverTime = await getServerBasedTime();
+      if (serverTime) {
+        console.log("Using MCP server time-based greeting:", serverTime.greeting);
+        return `${serverTime.greeting}, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+      }
+    } catch (error) {
+      console.error("Error getting server-based greeting:", error);
+    }
+    
+    // Fallback to local time
+    const hour = new Date().getHours();
     
     if (hour >= 5 && hour < 12) {
       return `Góðan morgun, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
@@ -111,16 +125,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   useEffect(() => {
     // Load initial greeting only once
     if (!initialGreetingDone) {
-      const initialGreeting = getTimeBasedGreeting();
+      // Use async function in useEffect
+      const loadGreeting = async () => {
+        const initialGreeting = await getAccurateTimeBasedGreeting();
+        
+        setTimeout(() => {
+          const greeting = setInitialGreeting(initialGreeting);
+          if (!hasError) {
+            setActiveSubtitleText(initialGreeting);
+            speakMessage(greeting);
+          }
+          setInitialGreetingDone(true);
+        }, 1000);
+      };
       
-      setTimeout(() => {
-        const greeting = setInitialGreeting(initialGreeting);
-        if (!hasError) {
-          setActiveSubtitleText(initialGreeting);
-          speakMessage(greeting);
-        }
-        setInitialGreetingDone(true);
-      }, 1000);
+      loadGreeting();
     }
   }, [gender, initialGreetingDone, setInitialGreeting, speakMessage, hasError]);
 

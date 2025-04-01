@@ -111,10 +111,33 @@ export const getServerDetails = async (
  * @param config Configuration object matching the server's schema
  * @returns Encoded URL for connection
  */
-export const createConnectionUrl = (
+export const createSmitheryUrl = (
   serverUrl: string,
   config: any
 ): string => {
   const encodedConfig = btoa(JSON.stringify(config));
   return `${serverUrl}?config=${encodedConfig}`;
+};
+
+/**
+ * Get a specific time-related MCP server
+ * @returns Promise resolving to the server details or null
+ */
+export const getTimeServer = async (): Promise<ServerDetail | null> => {
+  try {
+    // First search for time-related servers
+    const searchResults = await searchServers("time server is:deployed");
+    
+    if (!searchResults.servers || searchResults.servers.length === 0) {
+      console.warn("No time servers found in Smithery registry");
+      return null;
+    }
+    
+    // Get the first available server
+    const server = searchResults.servers[0];
+    return await getServerDetails(server.qualifiedName);
+  } catch (error) {
+    console.error("Error finding time server:", error);
+    return null;
+  }
 };
