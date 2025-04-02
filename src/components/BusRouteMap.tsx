@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { getStraetoRealtime, getStraetoRoutes, StraetoRealtimeData, StraetoRoute } from '@/services/straetoService';
+import { getStraetoRealtime, getStraetoRoutes, StraetoRealtimeData, StraetoRoute } from '@/services/straeto';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { MapPin, Bus, RefreshCw } from 'lucide-react';

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { getStraetoArrivals, getStraetoStops, StraetoArrival, StraetoStop } from '@/services/straetoService';
+import { getStraetoArrivals, getStraetoStops, StraetoArrival, StraetoStop } from '@/services/straeto';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

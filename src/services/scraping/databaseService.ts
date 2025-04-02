@@ -171,19 +171,21 @@ export const databaseService = {
       // Transform the data
       const transformedData = data.map(dataTransform);
       
-      // Use upsert for locations (replace), but insert with on conflict do nothing for others
-      const { error } = await supabase
-        .from(tableName)
-        .upsert(transformedData, {
-          onConflict: type === 'locations' 
-            ? 'bus_id' 
-            : type === 'routes' 
-              ? 'route_number' 
-              : 'stop_id'
-        });
+      // Use REST API instead of supabase client to avoid type issues
+      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/${tableName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
+          'apikey': SUPABASE_PUBLIC_KEY,
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(transformedData)
+      });
       
-      if (error) {
-        console.error(`Error saving ${type} data:`, error);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error saving ${type} data:`, errorText);
         return false;
       }
       
