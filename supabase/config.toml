@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.smithery-mcp]
 verify_jwt = false
+
+[functions.straeto]
+verify_jwt = false

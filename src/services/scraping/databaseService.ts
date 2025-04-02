@@ -117,5 +117,80 @@ export const databaseService = {
       console.error('Error in deleteScrapedData:', error);
       return false;
     }
+  },
+  
+  /**
+   * Save transportation data to the appropriate tables
+   * @param type The type of transportation data ('routes', 'stops', 'locations')
+   * @param data The data to save
+   * @returns Success status
+   */
+  async saveTransportationData(type: 'routes' | 'stops' | 'locations', data: any[]): Promise<boolean> {
+    try {
+      let tableName = '';
+      let dataTransform = (item: any) => item;
+      
+      // Define table name and data transformation for each type
+      switch (type) {
+        case 'routes':
+          tableName = 'bus_routes';
+          dataTransform = (route: any) => ({
+            route_number: route.shortName,
+            name: route.longName,
+            description: route.description,
+            color: route.color
+          });
+          break;
+        case 'stops':
+          tableName = 'bus_stops';
+          dataTransform = (stop: any) => ({
+            stop_id: stop.id,
+            name: stop.name,
+            latitude: stop.coordinates.lat,
+            longitude: stop.coordinates.lng,
+            address: stop.address
+          });
+          break;
+        case 'locations':
+          tableName = 'bus_locations';
+          dataTransform = (location: any) => ({
+            bus_id: location.busId,
+            route_id: location.routeId,
+            route_number: location.routeNumber,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            heading: location.heading,
+            speed: location.speed,
+            timestamp: location.timestamp
+          });
+          break;
+        default:
+          throw new Error(`Unknown transportation data type: ${type}`);
+      }
+      
+      // Transform the data
+      const transformedData = data.map(dataTransform);
+      
+      // Use upsert for locations (replace), but insert with on conflict do nothing for others
+      const { error } = await supabase
+        .from(tableName)
+        .upsert(transformedData, {
+          onConflict: type === 'locations' 
+            ? 'bus_id' 
+            : type === 'routes' 
+              ? 'route_number' 
+              : 'stop_id'
+        });
+      
+      if (error) {
+        console.error(`Error saving ${type} data:`, error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error in saveTransportationData for ${type}:`, error);
+      return false;
+    }
   }
 };

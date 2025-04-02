@@ -21,6 +21,116 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_locations: {
+        Row: {
+          bus_id: string
+          heading: number | null
+          id: number
+          latitude: number
+          longitude: number
+          route_id: number | null
+          route_number: string
+          speed: number | null
+          timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          bus_id: string
+          heading?: number | null
+          id?: number
+          latitude: number
+          longitude: number
+          route_id?: number | null
+          route_number: string
+          speed?: number | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Update: {
+          bus_id?: string
+          heading?: number | null
+          id?: number
+          latitude?: number
+          longitude?: number
+          route_id?: number | null
+          route_number?: string
+          speed?: number | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_locations_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "bus_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_routes: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          route_number: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          route_number: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          route_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bus_stops: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: number
+          latitude: number
+          longitude: number
+          name: string
+          stop_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: number
+          latitude: number
+          longitude: number
+          name: string
+          stop_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: number
+          latitude?: number
+          longitude?: number
+          name?: string
+          stop_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ideas: {
         Row: {
           category: string | null
@@ -142,6 +252,93 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      route_schedules: {
+        Row: {
+          arrival_time: string
+          created_at: string
+          day_type: string
+          departure_time: string
+          id: number
+          route_id: number
+          stop_id: number
+          updated_at: string
+        }
+        Insert: {
+          arrival_time: string
+          created_at?: string
+          day_type: string
+          departure_time: string
+          id?: number
+          route_id: number
+          stop_id: number
+          updated_at?: string
+        }
+        Update: {
+          arrival_time?: string
+          created_at?: string
+          day_type?: string
+          departure_time?: string
+          id?: number
+          route_id?: number
+          stop_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_schedules_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "bus_routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_schedules_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "bus_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      route_stops: {
+        Row: {
+          created_at: string
+          id: number
+          route_id: number
+          stop_id: number
+          stop_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          route_id: number
+          stop_id: number
+          stop_order: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          route_id?: number
+          stop_id?: number
+          stop_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_stops_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "bus_routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stops_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "bus_stops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_playlists: {
         Row: {

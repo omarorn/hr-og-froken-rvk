@@ -11,6 +11,8 @@ import MapView from '@/components/MapView';
 import BusRouteInfo from '@/components/BusRouteInfo';
 import WasteCollectionInfo from '@/components/WasteCollectionInfo';
 import CityDataCrawler from '@/components/CityDataCrawler';
+import { Link } from 'react-router-dom';
+import { Bus, Map, Info, Database } from 'lucide-react';
 
 const Index = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -71,6 +73,48 @@ const Index = () => {
       </header>
       
       <main className="py-8 px-4 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Link to="/">
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16">
+              <Info className="h-5 w-5" />
+              <div className="text-left">
+                <div className="font-medium">Aðstoðarmaður</div>
+                <div className="text-xs text-muted-foreground">Upplýsingar og hjálp</div>
+              </div>
+            </Button>
+          </Link>
+          
+          <Link to="/bus-tracking">
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16">
+              <Bus className="h-5 w-5" />
+              <div className="text-left">
+                <div className="font-medium">Strætó</div>
+                <div className="text-xs text-muted-foreground">Rauntímastaðsetning strætó</div>
+              </div>
+            </Button>
+          </Link>
+          
+          <Link to="/">
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16">
+              <Map className="h-5 w-5" />
+              <div className="text-left">
+                <div className="font-medium">Kort</div>
+                <div className="text-xs text-muted-foreground">Staðsetningar og leiðir</div>
+              </div>
+            </Button>
+          </Link>
+          
+          <Link to="/">
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16">
+              <Database className="h-5 w-5" />
+              <div className="text-left">
+                <div className="font-medium">Gögn</div>
+                <div className="text-xs text-muted-foreground">Opið gagnasafn</div>
+              </div>
+            </Button>
+          </Link>
+        </div>
+        
         <Tabs defaultValue="assistant" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid grid-cols-4 md:w-[600px] w-full mx-auto">
             <TabsTrigger value="assistant">Aðstoðarmaður</TabsTrigger>
