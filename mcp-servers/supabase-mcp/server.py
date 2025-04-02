@@ -1,23 +1,22 @@
 import os
-from fastmcp import FastMCP
-from fastmcp.tools import tool
+from fastmcp import FastMCP, tools
 
-@tool(description="Reads rows from a Supabase table", config_schema={"table": {"type": "string"}})
+@tools.tool(description="Reads rows from a Supabase table", config_schema={"table": {"type": "string"}})
 def read_rows(table: str):
     # Simulated read rows from a Supabase table.
     return {"data": [{"id": 1, "name": "Row 1"}, {"id": 2, "name": "Row 2"}]}
 
-@tool(description="Creates a new record in a Supabase table", config_schema={"table": {"type": "string"}, "record": {"type": "object"}})
+@tools.tool(description="Creates a new record in a Supabase table", config_schema={"table": {"type": "string"}, "record": {"type": "object"}})
 def create_record(table: str, record: dict):
     # Simulated record creation.
     return {"status": "success", "record": record}
 
-@tool(description="Updates a record in a Supabase table", config_schema={"table": {"type": "string"}, "id": {"type": "integer"}, "record": {"type": "object"}})
+@tools.tool(description="Updates a record in a Supabase table", config_schema={"table": {"type": "string"}, "id": {"type": "integer"}, "record": {"type": "object"}})
 def update_record(table: str, id: int, record: dict):
     # Simulated record update.
     return {"status": "success", "id": id, "record": record}
 
-@tool(description="Deletes a record from a Supabase table", config_schema={"table": {"type": "string"}, "id": {"type": "integer"}})
+@tools.tool(description="Deletes a record from a Supabase table", config_schema={"table": {"type": "string"}, "id": {"type": "integer"}})
 def delete_record(table: str, id: int):
     # Simulated record deletion.
     return {"status": "success", "id": id}
@@ -34,5 +33,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    

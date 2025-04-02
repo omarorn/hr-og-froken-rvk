@@ -1,13 +1,99 @@
 {
   "mcpServers": {
-    "supabase": {
-      "serverUrl": "ws://localhost:8000",
-      "tools": [
-        "read_rows",
-        "create_record"
+    "github.com/alexander-zuev/supabase-mcp-server": {
+      "autoApprove": [],
+      "disabled": false,
+      "timeout": 60,
+      "command": "C:\\Users\\Administrator\\pipx\\venvs\\supabase-mcp-server\\Scripts\\supabase-mcp-server.exe",
+      "transportType": "stdio"
+    },
+    "@21st-dev/magic": {
+      "disabled": false,
+      "timeout": 60,
+      "command": "cmd",
+      "args": [
+        "-y",
+        "@21st-dev/magic@latest",
+        "API_KEY=\"fb42a4fd061bd62106d2533a30556f753cde142deee4d9f7ba40dcbc95d60c1c\""
       ],
-      "description": "Custom Supabase MCP server for database operations",
-      "dockerImage": "mcp/supabase"
+      "transportType": "stdio"
+    },
+    "mcp-server-starter": {
+      "disabled": false,
+      "timeout": 60,
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@TheSethRose/mcp-server-starter",
+        "--key",
+        "6414143a-fd9a-4e5e-9b8f-f900f97785cb"
+      ],
+      "transportType": "stdio"
+    },
+    "code-mcp": {
+      "autoApprove": [
+        "execute_shell_command",
+        "create_diff",
+        "open_file",
+        "open_project",
+        "check_extension_status",
+        "get_extension_port",
+        "list_available_projects",
+        "get_active_tabs",
+        "get_context_tabs"
+      ],
+      "timeout": 60,
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@block/code-mcp",
+        "--key",
+        "6414143a-fd9a-4e5e-9b8f-f900f97785cb"
+      ],
+      "transportType": "stdio"
+    },
+    "gsuite-mcp": {
+      "timeout": 60,
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@rishipradeep-think41/gsuite-mcp",
+        "--key",
+        "6414143a-fd9a-4e5e-9b8f-f900f97785cb",
+        "--config",
+        "\"{\\\"googleClientId\\\":\\\"670340668961-pbrk2isppfeqknt8a8ca526p0jun29ip.apps.googleusercontent.com\\\",\\\"googleClientSecret\\\":\\\"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\\\",\\\"googleRefreshToken\\\":\\\"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\\\"}\""
+      ],
+      "transportType": "stdio"
+    },
+    "github.com/Saik0s/mcp-browser-use": {
+      "autoApprove": [],
+      "disabled": false,
+      "timeout": 60,
+      "command": "C:\\Users\\Administrator\\OneDrive\\AI\\git\\hr-og-froken-rvk\\.venv\\Scripts\\python",
+      "args": [
+        "-m",
+        "mcp_server_browser_use"
+      ],
+      "env": {
+        "BROWSER_HEADLESS": "false",
+        "BROWSER_WINDOW_WIDTH": "1280",
+        "BROWSER_WINDOW_HEIGHT": "720",
+        "MCP_USE_VISION": "true",
+        "MCP_TEMPERATURE": "0.3"
+      },
+      "transportType": "stdio"
     }
   }
 }
