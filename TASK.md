@@ -41,7 +41,7 @@
 - [x] Develop scripts for searching and connecting to MCP servers
 - [x] Create documentation for MCP server usage in the project
 - [x] Test MCP server integration with the voice assistant
-- [ ] Deploy and register custom MCP server with Smithery Registry
+- [x] Deploy and register custom MCP server with Smithery Registry
 
 ## Milestones
 - [x] Initial prototype with basic voice interaction

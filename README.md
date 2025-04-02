@@ -1,53 +1,44 @@
+# Voice Assistant Project
 
-# Rosa Munnlegur Fjola Project
-
-## Project Description
-Interactive voice-enabled React application for the city of Reykjavík with:
-- Vite + TypeScript
-- shadcn/ui components
-- OpenAI voice services
-- Conversational AI using OpenAI
-
-## Technology Stack
-- Frontend: React 18, TypeScript
-- Styling: Tailwind CSS
-- State Management: React Query
-- Voice Services: OpenAI TTS/Whisper APIs
-- Conversational AI: OpenAI GPT-4o-mini API
-- Backend: Supabase for edge functions
+## Overview
+This project is a voice assistant application built with React and Vite that integrates OpenAI for transcription and conversation management. It features voice recording, playback, and transcription services, along with a dynamic UI and an optional gender toggle for the assistant.
 
 ## Features
-- Voice input and output in Icelandic
-- AI assistant characters (Rósa and Birkir)
-- Conversational intelligence for city-related questions
-- Real-time audio visualization
-- Custom voice styling
+- Basic voice recording and playback functionality
+- Integration with OpenAI API for transcription and conversation management
+- User-friendly voice assistant UI with interactive controls
+- MCP Server integration for enhanced functionalities:
+  - Custom Supabase MCP server for database operations (read, create, update, delete records)
+  - Code MCP and Google Suite MCP integration available in configuration
+- Error handling and logging improvements
 
-## Getting Started
-1. Install dependencies: `npm install`
-2. Set OpenAI API key in settings
-3. Run dev server: `npm run dev`
+## Current Status
+- Core functionalities deployed and tested
+- MCP server integration verified and documented
+- Ongoing improvements:
+  - **Loading States & User Feedback**: Need to improve UI loading states.
+  - **Audio Processing Optimization**: Future work to boost performance.
+  - **Session Persistence**: Implementation pending.
+  - **Language Switching**: Support for Icelandic and English under development.
+  - **Automated Tests & Analytics**: Planned for future release.
+  - **Caching Strategies**: To be implemented.
 
-## Project Structure
-- `/src/components` - UI components
-- `/src/hooks` - Custom hooks for reusable logic
-- `/src/services` - API services and data processing
-- `/src/pages` - Main application pages
-- `/src/integrations` - Third-party integrations (Supabase)
+## Project Tasks
+For a detailed list of tasks and progress, refer to [TASK.md](TASK.md) and [todo.md](todo.md).
 
-## Development Guidelines
-- Keep files under 500 lines of code
-- Create unit tests for new functionality
-- Document all components and services
-- Follow the TypeScript type definitions
+## Setup Instructions
+1. Clone the repository.
+2. Install dependencies using the appropriate package manager.
+3. Start the development server:
+   ```
+   npm run dev
+   ```
+4. For MCP server testing, ensure Docker is running or use the provided virtual environment.
 
-## Voice Services
-The application uses OpenAI's Text-to-Speech (TTS) and Whisper APIs for voice interaction:
-- TTS converts text responses to audio
-- Whisper transcribes user's voice input to text
+## Future Enhancements
+- Polished UI with complete interaction flow
+- Production-ready application with robust error handling and optimizations
+- Multilingual support and advanced features including voice analytics and caching
 
-## Conversation AI
-Uses OpenAI's GPT-4o-mini model to process user queries about Reykjavík city services and provide relevant information in Icelandic.
-
-## Contributing
-See PLANNING.md for architecture details and TASK.md for current tasks and backlog.
+## License
+[MIT](LICENSE)
