@@ -48,6 +48,30 @@ export interface StraetoRealtimeData {
   };
 }
 
+// Define interfaces for database tables
+export interface BusRoute {
+  id: number;
+  route_number: string;
+  name: string;
+  description?: string;
+  color?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusLocation {
+  id: number;
+  bus_id: string;
+  route_id?: number;
+  route_number: string;
+  latitude: number;
+  longitude: number;
+  heading?: number;
+  speed?: number;
+  timestamp: string;
+  updated_at: string;
+}
+
 // Error interface
 export interface StraetoError {
   error: string;
@@ -179,14 +203,18 @@ export const syncStraetoData = async (): Promise<{ message: string } | StraetoEr
  */
 export const getLocalBusRoutes = async (): Promise<StraetoRoute[] | StraetoError> => {
   try {
-    const { data, error } = await supabase
-      .from('bus_routes')
-      .select('*');
+    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/bus_routes?select=*`, {
+      headers: {
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${supabase.supabaseKey}`
+      }
+    });
 
-    if (error) {
-      console.error('Error fetching local bus routes:', error);
-      return { error: error.message };
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json() as BusRoute[];
 
     // Transform database format to StraetoRoute format
     const routes = data.map(route => ({
@@ -211,29 +239,32 @@ export const getLocalBusRoutes = async (): Promise<StraetoRoute[] | StraetoError
  */
 export const getLocalBusLocations = async (routeId?: string): Promise<StraetoRealtimeData[] | StraetoError> => {
   try {
-    let query = supabase
-      .from('bus_locations')
-      .select('*')
-      .order('updated_at', { ascending: false });
-
+    let url = `${supabase.supabaseUrl}/rest/v1/bus_locations?select=*&order=updated_at.desc`;
+    
     if (routeId) {
-      query = query.eq('route_id', routeId);
+      url += `&route_id=eq.${routeId}`;
     }
 
-    const { data, error } = await query;
+    const response = await fetch(url, {
+      headers: {
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${supabase.supabaseKey}`
+      }
+    });
 
-    if (error) {
-      console.error('Error fetching local bus locations:', error);
-      return { error: error.message };
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json() as BusLocation[];
 
     // Transform database format to StraetoRealtimeData format
     const locations = data.map(location => ({
       busId: location.bus_id,
       routeId: location.route_id ? location.route_id.toString() : '',
       routeNumber: location.route_number,
-      latitude: parseFloat(location.latitude),
-      longitude: parseFloat(location.longitude),
+      latitude: location.latitude,
+      longitude: location.longitude,
       heading: location.heading,
       speed: location.speed,
       timestamp: location.timestamp
