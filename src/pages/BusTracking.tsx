@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BusRouteMap from '@/components/BusRouteMap';
-import BusSchedule from '@/components/BusSchedule';
-import { getStraetoRoutes, StraetoRoute } from '@/services/straetoService';
+import { BusSchedule } from '@/components/bus';
+import { getStraetoRoutes, StraetoRoute } from '@/services/straeto';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
