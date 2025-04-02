@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { getDirections } from '@/services/maps';
-import { TransportMode } from '@/services/maps/types';
+import type { TransportMode } from '@/services/maps/types';
 
 interface DirectionStep {
   instruction: string;
@@ -9,7 +9,8 @@ interface DirectionStep {
   duration: string;
 }
 
-export { TransportMode };
+// Re-export the type using 'export type' to fix the isolatedModules error
+export type { TransportMode };
 
 export const useDirections = (originCoords: { lat: number; lng: number }) => {
   const [destinationAddress, setDestinationAddress] = useState<string>('');

@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMap } from '@/hooks/useMap';
-import { useDirections, TransportMode } from '@/hooks/useDirections';
+import { useDirections } from '@/hooks/useDirections';
+import type { TransportMode } from '@/services/maps/types';
 import SearchBar from '@/components/map/SearchBar';
 import DirectionsPanel from '@/components/map/DirectionsPanel';
 import MapDisplay from '@/components/map/MapDisplay';

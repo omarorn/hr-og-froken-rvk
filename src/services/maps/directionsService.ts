@@ -3,7 +3,7 @@
  * Service for handling directions functionality
  */
 
-import { DirectionsResult, TransportMode } from './types';
+import type { DirectionsResult, TransportMode } from './types';
 
 /**
  * Get directions between two locations
