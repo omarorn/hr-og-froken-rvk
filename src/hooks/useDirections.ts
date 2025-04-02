@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { getDirections } from '@/services/maps';
+import { TransportMode } from '@/services/maps/types';
 
 interface DirectionStep {
   instruction: string;
@@ -8,7 +9,7 @@ interface DirectionStep {
   duration: string;
 }
 
-export type TransportMode = 'driving' | 'walking' | 'bicycling' | 'transit';
+export { TransportMode };
 
 export const useDirections = (originCoords: { lat: number; lng: number }) => {
   const [destinationAddress, setDestinationAddress] = useState<string>('');
