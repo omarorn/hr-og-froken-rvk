@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reykjavík Voice Assistant API & Edge Functions</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #1a365d;
+            border-bottom: 2px solid #3182ce;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            flex: 1 1 300px;
+            max-width: 500px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        .card h2 {
+            color: #3182ce;
+            margin-top: 0;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .card h3 {
+            color: #4a5568;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            background-color: #ebf4ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3182ce;
+            font-size: 20px;
+        }
+        .endpoint {
+            background-color: #f7fafc;
+            border-left: 3px solid #3182ce;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .method {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .get {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+        .post {
+            background-color: #bee3f8;
+            color: #2a4365;
+        }
+        .talking-points {
+            background-color: #e9f5f8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        .talking-points h2 {
+            color: #2b6cb0;
+            margin-top: 0;
+        }
+        .talking-points ul {
+            padding-left: 20px;
+        }
+        .talking-points li {
+            margin-bottom: 10px;
+        }
+        .architecture {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .architecture img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .architecture-diagram {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            text-align: center;
+        }
+        .diagram-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .diagram-row {
+            display: flex;
+            margin: 10px 0;
+            width: 100%;
+            justify-content: center;
+        }
+        .diagram-box {
+            padding: 10px 15px;
+            margin: 0 10px;
+            border-radius: 6px;
+            min-width: 120px;
+            text-align: center;
+            position: relative;
+        }
+        .diagram-arrow {
+            position: relative;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .diagram-arrow::after {
+            content: "↓";
+            font-size: 20px;
+            color: #4a5568;
+        }
+        .client {
+            background-color: #ebf8ff;
+            border: 2px solid #3182ce;
+        }
+        .api {
+            background-color: #e9d8fd;
+            border: 2px solid #805ad5;
+        }
+        .edge {
+            background-color: #feebc8;
+            border: 2px solid #dd6b20;
+        }
+        .openai {
+            background-color: #c6f6d5;
+            border: 2px solid #38a169;
+        }
+        .mcp {
+            background-color: #fed7d7;
+            border: 2px solid #e53e3e;
+        }
+        .supabase {
+            background-color: #e2e8f0;
+            border: 2px solid #4a5568;
+        }
+        .horizontal-arrow {
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .horizontal-arrow::after {
+            content: "→";
+            font-size: 20px;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reykjavík Voice Assistant API & Edge Functions</h1>
+    
+    <div class="architecture-diagram">
+        <h2>System Architecture</h2>
+        <div class="diagram-container">
+            <div class="diagram-row">
+                <div class="diagram-box client">Client Application</div>
+            </div>
+            <div class="diagram-arrow"></div>
+            <div class="diagram-row">
+                <div class="diagram-box api">API Layer</div>
+            </div>
+            <div class="diagram-arrow"></div>
+            <div class="diagram-row">
+                <div class="diagram-box edge">Edge Functions</div>
+                <div class="horizontal-arrow"></div>
+                <div class="diagram-box mcp">MCP Servers</div>
+            </div>
+            <div class="diagram-arrow"></div>
+            <div class="diagram-row">
+                <div class="diagram-box openai">OpenAI API</div>
+                <div class="diagram-box supabase">Supabase</div>
+                <div class="diagram-box edge">External APIs</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🗣️</div>
+                <h2>Chat API</h2>
+            </div>
+            <p>Handles communication with OpenAI's chat completion API, enabling conversational interactions with the voice assistant.</p>
+            <div class="endpoint">
+                <span class="method post">POST</span> /api/chat
+            </div>
+            <h3>Features:</h3>
+            <ul>
+                <li>Supports GPT-4o-mini model by default</li>
+                <li>Configurable temperature and token limits</li>
+                <li>Error handling with detailed feedback</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🎤</div>
+                <h2>Transcription API</h2>
+            </div>
+            <p>Converts audio recordings to text using OpenAI's Whisper model, with support for Icelandic language.</p>
+            <div class="endpoint">
+                <span class="method post">POST</span> /api/transcribe
+            </div>
+            <h3>Features:</h3>
+            <ul>
+                <li>Default language set to Icelandic</li>
+                <li>Detailed logging for debugging</li>
+                <li>Robust error handling</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🔊</div>
+                <h2>Speech API</h2>
+            </div>
+            <p>Converts text to speech using OpenAI's text-to-speech API, with customizable voice options.</p>
+            <div class="endpoint">
+                <span class="method post">POST</span> /api/speech
+            </div>
+            <h3>Features:</h3>
+            <ul>
+                <li>Uses gpt-4o-mini-tts model</li>
+                <li>Customizable voice selection</li>
+                <li>Stylized speech instructions</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🌍</div>
+                <h2>Contextual Data</h2>
+            </div>
+            <p>Edge function that provides location-specific information for Reykjavík, enhancing the assistant's contextual awareness.</p>
+            <div class="endpoint">
+                <span class="method post">POST</span> /functions/contextual-data
+            </div>
+            <h3>Data Types:</h3>
+            <ul>
+                <li>Current time with Icelandic formatting</li>
+                <li>Waste collection schedules by postal code</li>
+                <li>Bus routes and transportation information</li>
+                <li>Nearby locations and points of interest</li>
+                <li>Web crawl data from city resources</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🚌</div>
+                <h2>Straeto API</h2>
+            </div>
+            <p>Edge function that interfaces with Reykjavík's public transportation system (Straeto) to provide real-time bus information.</p>
+            <div class="endpoint">
+                <span class="method get">GET</span> /functions/straeto/routes
+            </div>
+            <div class="endpoint">
+                <span class="method get">GET</span> /functions/straeto/realtime
+            </div>
+            <div class="endpoint">
+                <span class="method get">GET</span> /functions/straeto/stops
+            </div>
+            <div class="endpoint">
+                <span class="method get">GET</span> /functions/straeto/arrivals
+            </div>
+            <h3>Features:</h3>
+            <ul>
+                <li>Real-time bus locations</li>
+                <li>Route information and stops</li>
+                <li>Arrival time predictions</li>
+                <li>Data transformation for consistent formats</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🔌</div>
+                <h2>MCP Servers</h2>
+            </div>
+            <p>Model Context Protocol servers that extend the assistant's capabilities with specialized tools.</p>
+            <h3>Available Servers:</h3>
+            <ul>
+                <li><strong>Supabase MCP:</strong> Database operations for Supabase integration</li>
+                <li><strong>Code MCP:</strong> Code-related operations and utilities</li>
+                <li><strong>Google Suite MCP:</strong> Integration with Google services</li>
+            </ul>
+            <h3>Supabase MCP Tools:</h3>
+            <ul>
+                <li>read_rows: Read data from tables</li>
+                <li>create_record: Create new database records</li>
+                <li>update_record: Update existing records</li>
+                <li>delete_record: Remove records from tables</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="talking-points">
+        <h2>Key Talking Points</h2>
+        <ul>
+            <li><strong>Multilingual Support:</strong> The voice assistant is designed with Icelandic language support as a default, making it accessible to local residents while also supporting other languages.</li>
+            <li><strong>Contextual Awareness:</strong> Through the contextual-data edge function, the assistant has access to location-specific information about Reykjavík, including time, waste collection schedules, and points of interest.</li>
+            <li><strong>Public Transportation Integration:</strong> The Straeto edge function provides real-time bus information, making the assistant useful for navigating the city's public transportation system.</li>
+            <li><strong>Extensible Architecture:</strong> The MCP server integration allows for extending the assistant's capabilities with specialized tools, such as database operations, code utilities, and Google services integration.</li>
+            <li><strong>Edge Computing:</strong> By leveraging edge functions, the system can process data closer to the user, reducing latency and improving performance.</li>
+            <li><strong>OpenAI Integration:</strong> The assistant uses OpenAI's latest models for chat, transcription, and text-to-speech, providing high-quality conversational experiences.</li>
+            <li><strong>Error Handling:</strong> Robust error handling throughout the API and edge functions ensures a reliable user experience, with detailed logging for debugging.</li>
+            <li><strong>Modular Design:</strong> The system is built with a modular design, making it easy to add new features and capabilities as needed.</li>
+        </ul>
+    </div>
+</body>
+</html>
