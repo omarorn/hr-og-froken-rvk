@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from '@/integrations/supabase/client';
 
 // Type definitions for Straeto API responses
 export interface StraetoRoute {
@@ -203,10 +203,10 @@ export const syncStraetoData = async (): Promise<{ message: string } | StraetoEr
  */
 export const getLocalBusRoutes = async (): Promise<StraetoRoute[] | StraetoError> => {
   try {
-    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/bus_routes?select=*`, {
+    const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/bus_routes?select=*`, {
       headers: {
-        'apikey': supabase.supabaseKey,
-        'Authorization': `Bearer ${supabase.supabaseKey}`
+        'apikey': SUPABASE_PUBLIC_KEY,
+        'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`
       }
     });
 
@@ -239,7 +239,7 @@ export const getLocalBusRoutes = async (): Promise<StraetoRoute[] | StraetoError
  */
 export const getLocalBusLocations = async (routeId?: string): Promise<StraetoRealtimeData[] | StraetoError> => {
   try {
-    let url = `${supabase.supabaseUrl}/rest/v1/bus_locations?select=*&order=updated_at.desc`;
+    let url = `${SUPABASE_PUBLIC_URL}/rest/v1/bus_locations?select=*&order=updated_at.desc`;
     
     if (routeId) {
       url += `&route_id=eq.${routeId}`;
@@ -247,8 +247,8 @@ export const getLocalBusLocations = async (routeId?: string): Promise<StraetoRea
 
     const response = await fetch(url, {
       headers: {
-        'apikey': supabase.supabaseKey,
-        'Authorization': `Bearer ${supabase.supabaseKey}`
+        'apikey': SUPABASE_PUBLIC_KEY,
+        'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`
       }
     });
 
