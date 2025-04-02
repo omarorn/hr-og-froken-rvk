@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reykjavík Live Bus View</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; flex-direction: column; }
+        #map { height: calc(100% - 100px); width: 100%; }
+        .controls { padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #ccc; height: 80px; overflow-y: auto; }
+        .controls label { margin-right: 10px; display: inline-block; }
+        .controls input[type="checkbox"] { margin-right: 5px; }
+        .loading { text-align: center; padding: 10px; background-color: #fffbe6; border: 1px solid #ffe58f; }
+        .error { text-align: center; padding: 10px; background-color: #fff1f0; border: 1px solid #ffa39e; color: #cf1322; }
+        .bus-icon {
+            background-color: #3182ce;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid white;
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="controls" id="controls">
+        Loading routes...
+    </div>
+    <div id="map"></div>
+    <div id="status"></div>
+
+    <script>
+        const map = L.map('map').setView([64.135, -21.895], 12); // Centered on Reykjavík
+        const busMarkers = {}; // Store markers by busId
+        let updateInterval;
+        let selectedRoutes = [];
+
+        // Supabase URL and Key (replace with actual values if needed, using placeholders from .env)
+        const SUPABASE_URL = 'https://mxtzgebhtwofehdktfaq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14dHpnZWJodHdvZmVoZGt0ZmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1NDQwODMsImV4cCI6MjA1OTEyMDA4M30.eGvwOP0Vnclas7Q-LRq7T7Leq2DbuQQ7aTwaakLDCHA';
+        const STRAETO_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/straeto`;
+
+        // Add Tile Layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        const statusDiv = document.getElementById('status');
+        const controlsDiv = document.getElementById('controls');
+
+        function showStatus(message, type = 'loading') {
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function clearStatus() {
+            statusDiv.innerHTML = '';
+        }
+
+        // Fetch available routes and populate controls
+        async function fetchRoutes() {
+            showStatus('Fetching available bus routes...');
+            try {
+                const response = await fetch(`${STRAETO_FUNCTION_URL}/routes`, {
+                    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                });
+                if (!response.ok) throw new Error(`Failed to fetch routes: ${response.statusText}`);
+                const routes = await response.json();
+
+                controlsDiv.innerHTML = 'Select routes: ';
+                routes.sort((a, b) => parseInt(a.shortName) - parseInt(b.shortName)).forEach(route => {
+                    const label = document.createElement('label');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = route.id;
+                    checkbox.id = `route-${route.id}`;
+                    checkbox.addEventListener('change', handleRouteChange);
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(route.shortName));
+                    controlsDiv.appendChild(label);
+                });
+                clearStatus();
+                startFetchingBusLocations(); // Start fetching initially with no routes selected
+            } catch (error) {
+                console.error('Error fetching routes:', error);
+                showStatus(`Error fetching routes: ${error.message}`, 'error');
+                controlsDiv.innerHTML = 'Could not load routes.';
+            }
+        }
+
+        // Handle route selection change
+        function handleRouteChange() {
+            selectedRoutes = Array.from(controlsDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                                .map(cb => cb.value);
+            console.log('Selected routes:', selectedRoutes);
+            fetchBusLocations(); // Fetch immediately on change
+        }
+
+        // Fetch and update bus locations
+        async function fetchBusLocations() {
+            if (selectedRoutes.length === 0) {
+                // Clear existing markers if no routes are selected
+                Object.values(busMarkers).forEach(marker => map.removeLayer(marker));
+                Object.keys(busMarkers).forEach(key => delete busMarkers[key]);
+                showStatus('Select one or more routes to view live bus locations.', 'loading');
+                return;
+            }
+
+            showStatus(`Fetching locations for routes: ${selectedRoutes.join(', ')}...`);
+            const routeIdsParam = selectedRoutes.join(',');
+            try {
+                const response = await fetch(`${STRAETO_FUNCTION_URL}/realtime?routeIds=${routeIdsParam}`, {
+                    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                });
+                if (!response.ok) throw new Error(`Failed to fetch bus locations: ${response.statusText}`);
+                const buses = await response.json();
+
+                clearStatus();
+                updateBusMarkers(buses);
+
+            } catch (error) {
+                console.error('Error fetching bus locations:', error);
+                showStatus(`Error fetching bus locations: ${error.message}`, 'error');
+            }
+        }
+
+        // Update markers on the map
+        function updateBusMarkers(buses) {
+            const currentBusIds = new Set(buses.map(bus => bus.busId));
+
+            // Remove markers for buses no longer present
+            Object.keys(busMarkers).forEach(busId => {
+                if (!currentBusIds.has(busId)) {
+                    map.removeLayer(busMarkers[busId]);
+                    delete busMarkers[busId];
+                }
+            });
+
+            // Add or update markers for current buses
+            buses.forEach(bus => {
+                const latLng = [bus.latitude, bus.longitude];
+                const busIcon = L.divIcon({
+                    className: 'bus-icon',
+                    html: `<span>${bus.routeNumber}</span>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                if (busMarkers[bus.busId]) {
+                    // Update existing marker
+                    busMarkers[bus.busId].setLatLng(latLng);
+                    busMarkers[bus.busId].setIcon(busIcon); // Update icon in case route number changes (unlikely but possible)
+                    busMarkers[bus.busId].setRotationAngle(bus.heading); // Requires Leaflet.rotatedMarker plugin if needed
+                } else {
+                    // Create new marker
+                    const marker = L.marker(latLng, { icon: busIcon }).addTo(map);
+                    marker.bindPopup(`<b>Route: ${bus.routeNumber}</b><br>Bus ID: ${bus.busId}<br>Speed: ${bus.speed} km/h`);
+                    // marker.setRotationAngle(bus.heading); // Requires Leaflet.rotatedMarker plugin
+                    busMarkers[bus.busId] = marker;
+                }
+            });
+             console.log(`Updated ${buses.length} bus locations. Total markers: ${Object.keys(busMarkers).length}`);
+        }
+
+        // Start periodic updates
+        function startFetchingBusLocations() {
+            fetchBusLocations(); // Initial fetch
+            if (updateInterval) clearInterval(updateInterval); // Clear existing interval if any
+            updateInterval = setInterval(fetchBusLocations, 20000); // Update every 20 seconds
+        }
+
+        // Initial load
+        fetchRoutes();
+
+    </script>
+</body>
+</html>

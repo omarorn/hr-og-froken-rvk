@@ -32,6 +32,7 @@
 - [ ] Implement better error recovery for failed transcriptions
 - [ ] Add visual feedback for voice levels during recording
 - [x] Investigate Smithery Registry for available MCP servers
+- [ ] Test APIs using browser interaction (2025-04-02)
 
 ## MCP Integration Tasks
 - [x] Search Smithery Registry for available MCP servers
