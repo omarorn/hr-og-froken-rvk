@@ -8,9 +8,11 @@ interface DirectionStep {
   duration: string;
 }
 
+export type TransportMode = 'driving' | 'walking' | 'bicycling' | 'transit';
+
 export const useDirections = (originCoords: { lat: number; lng: number }) => {
   const [destinationAddress, setDestinationAddress] = useState<string>('');
-  const [transportMode, setTransportMode] = useState<'driving' | 'walking' | 'bicycling' | 'transit'>('driving');
+  const [transportMode, setTransportMode] = useState<TransportMode>('driving');
   const [directionSteps, setDirectionSteps] = useState<DirectionStep[]>([]);
 
   const handleDirectionsSearch = useCallback(async (e: React.FormEvent) => {

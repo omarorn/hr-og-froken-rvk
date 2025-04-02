@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_service_logs: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          prompt: string
+          response: string | null
+          service: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          prompt: string
+          response?: string | null
+          service: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          prompt?: string
+          response?: string | null
+          service?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bORING: {
         Row: {
           Value: string[] | null
@@ -399,7 +432,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_logs_count_by_service: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          service: string
+          count: number
+          last_used: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

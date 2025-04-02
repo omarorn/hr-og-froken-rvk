@@ -22,6 +22,8 @@ export interface PlaceResult {
   };
 }
 
+export type TransportMode = 'driving' | 'walking' | 'bicycling' | 'transit';
+
 export interface DirectionsResult {
   origin: string;
   destination: string;

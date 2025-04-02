@@ -14,8 +14,8 @@ interface DirectionStep {
 interface DirectionsPanelProps {
   destinationAddress: string;
   setDestinationAddress: (value: string) => void;
-  transportMode: string;
-  setTransportMode: (value: string) => void;
+  transportMode: 'driving' | 'walking' | 'bicycling' | 'transit';
+  setTransportMode: (value: 'driving' | 'walking' | 'bicycling' | 'transit') => void;
   handleDirectionsSearch: (e: React.FormEvent) => void;
   directionSteps: DirectionStep[];
 }
@@ -40,7 +40,7 @@ const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
           />
           <Select
             value={transportMode}
-            onValueChange={setTransportMode}
+            onValueChange={(value: 'driving' | 'walking' | 'bicycling' | 'transit') => setTransportMode(value)}
           >
             <SelectTrigger className="w-[110px]">
               <SelectValue placeholder="Mode" />

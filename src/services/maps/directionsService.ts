@@ -3,7 +3,7 @@
  * Service for handling directions functionality
  */
 
-import { DirectionsResult } from './types';
+import { DirectionsResult, TransportMode } from './types';
 
 /**
  * Get directions between two locations
@@ -19,7 +19,7 @@ export const getDirections = async (
   originLng: number,
   destinationLat: number,
   destinationLng: number,
-  mode: "driving" | "walking" | "bicycling" | "transit" = "driving"
+  mode: TransportMode = "driving"
 ): Promise<DirectionsResult> => {
   try {
     // In a real implementation, this would call the Google Directions API
