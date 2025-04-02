@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from 'react';
+import { getDirections } from '@/services/maps';
 
 interface DirectionStep {
   instruction: string;
@@ -7,43 +8,45 @@ interface DirectionStep {
   duration: string;
 }
 
-export const useDirections = (center: { lat: number; lng: number }) => {
-  const [transportMode, setTransportMode] = useState<string>('driving');
+export const useDirections = (originCoords: { lat: number; lng: number }) => {
   const [destinationAddress, setDestinationAddress] = useState<string>('');
+  const [transportMode, setTransportMode] = useState<'driving' | 'walking' | 'bicycling' | 'transit'>('driving');
   const [directionSteps, setDirectionSteps] = useState<DirectionStep[]>([]);
 
-  const handleDirectionsSearch = useCallback((e: React.FormEvent) => {
+  const handleDirectionsSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(`Getting directions to: ${destinationAddress} via ${transportMode}`);
-    
-    // Mock directions data
-    const mockDirections = [
-      { instruction: "Head south on Laugavegur", distance: "300 m", duration: "1 min" },
-      { instruction: "Turn right onto Snorrabraut", distance: "700 m", duration: "2 mins" },
-      { instruction: "Continue onto Hringbraut", distance: "1.5 km", duration: "3 mins" },
-      { instruction: "Turn left onto Hofsvallagata", distance: "800 m", duration: "2 mins" }
-    ];
-    
-    setDirectionSteps(mockDirections);
-  }, [destinationAddress, transportMode]);
 
-  const getTransportIcon = useCallback(() => {
-    switch (transportMode) {
-      case 'driving': return 'Car';
-      case 'walking': return 'User';
-      case 'bicycling': return 'Bike';
-      case 'transit': return 'Bus';
-      default: return 'Car';
+    if (!destinationAddress || !originCoords) return;
+
+    // In a real app, we would geocode the destination address
+    // For now, we'll use a mock destination near Reykjavik
+    const mockDestination = {
+      lat: 64.1306, // Kringlan shopping mall
+      lng: -21.8937
+    };
+
+    try {
+      const directions = await getDirections(
+        originCoords.lat,
+        originCoords.lng,
+        mockDestination.lat,
+        mockDestination.lng,
+        transportMode
+      );
+
+      setDirectionSteps(directions.steps);
+    } catch (error) {
+      console.error('Error getting directions:', error);
+      setDirectionSteps([]);
     }
-  }, [transportMode]);
+  }, [destinationAddress, originCoords, transportMode]);
 
   return {
-    transportMode,
-    setTransportMode,
     destinationAddress,
     setDestinationAddress,
+    transportMode,
+    setTransportMode,
     directionSteps,
-    handleDirectionsSearch,
-    getTransportIcon
+    handleDirectionsSearch
   };
 };

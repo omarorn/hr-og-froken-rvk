@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Bus, Clock, Map, Navigation } from 'lucide-react';
 import { findBusTrips, BusTrip } from '@/services/transportationService';
-import { getCurrentLocation } from '@/services/mapsService';
+import { getCurrentLocation } from '@/services/maps';
 import { getCurrentTime, formatIcelandicDate } from '@/services/timeService';
 
 interface BusRouteInfoProps {
