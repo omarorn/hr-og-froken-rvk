@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCurrentLocation } from '@/services/mapsService';
+import { getCurrentLocation } from '@/services/maps';
 
 export interface MapLocation {
   lat: number;

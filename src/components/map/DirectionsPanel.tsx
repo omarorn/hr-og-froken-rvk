@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { TransportMode } from '@/services/maps/types';
 
 interface DirectionStep {
   instruction: string;
@@ -14,8 +15,8 @@ interface DirectionStep {
 interface DirectionsPanelProps {
   destinationAddress: string;
   setDestinationAddress: (value: string) => void;
-  transportMode: string;
-  setTransportMode: (value: string) => void;
+  transportMode: TransportMode;
+  setTransportMode: (value: TransportMode) => void;
   handleDirectionsSearch: (e: React.FormEvent) => void;
   directionSteps: DirectionStep[];
 }
@@ -40,7 +41,7 @@ const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
           />
           <Select
             value={transportMode}
-            onValueChange={setTransportMode}
+            onValueChange={(value: TransportMode) => setTransportMode(value)}
           >
             <SelectTrigger className="w-[110px]">
               <SelectValue placeholder="Mode" />
