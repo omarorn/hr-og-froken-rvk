@@ -1,0 +1,8 @@
+# Call Flow Summary
+1. User calls Twilio number
+2. Media stream starts
+3. Audio is transcribed (Deepgram)
+4. Text is sent to OpenAI Assistant
+5. Assistant replies
+6. TTS converts to audio
+7. Audio is sent back to caller
