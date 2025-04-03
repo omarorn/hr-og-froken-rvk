@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MessageSubtitles from './MessageSubtitles';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
@@ -12,6 +13,7 @@ import { useVoiceAssistantUI } from '@/hooks/useVoiceAssistantUI';
 import { useVoiceMessageHandler } from '@/hooks/useVoiceMessageHandler';
 import { useMCP } from '@/hooks/useMCP';
 import BackgroundContainer from './voice/BackgroundContainer';
+import { Badge } from '@/components/ui/badge';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -28,7 +30,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     setIsProcessing, 
     handleUserMessage, 
     setInitialGreeting,
-    currentScenario 
+    currentScenario,
+    assistantId,
+    threadId
   } = messageService;
   
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
@@ -127,8 +131,24 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   }, [isSpeaking, setActiveSubtitleText]);
 
+  // Render a badge if we have an active assistant
+  const renderAssistantBadge = () => {
+    if (assistantId && threadId) {
+      return (
+        <div className="fixed bottom-2 right-2 z-50">
+          <Badge variant="outline" className="bg-green-50 text-green-800 border-green-300 hover:bg-green-100">
+            OpenAI Assistant API
+          </Badge>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <BackgroundContainer currentScenario={currentScenario}>
+      {renderAssistantBadge()}
+      
       <AssistantContainer
         assistantName={assistantName}
         gender={gender}
@@ -136,7 +156,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         isSpeaking={isSpeaking}
         isListening={isListening}
         isProcessing={isProcessing}
-        isGreetingLoading={isGreetingLoading} // Pass greeting loading state
+        isGreetingLoading={isGreetingLoading}
         autoDetectVoice={autoDetectVoice}
         showVideoChat={showVideoChat}
         audioLevel={audioLevel}

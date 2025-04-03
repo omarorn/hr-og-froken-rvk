@@ -1,3 +1,4 @@
+
 # Project Tasks
 
 ## Active Tasks
@@ -11,6 +12,7 @@
 - [x] Create UI for voice assistant interface
 - [x] Add gender toggle for assistant (Rósa/Birkir)
 - [x] Fix transcription issues in audio recording workflow
+- [x] Update voice assistant to use OpenAI Assistants API
 
 ## Backlog
 - [x] Add more robust error handling for voice recording
@@ -50,3 +52,4 @@
 - [ ] Production-ready application with error handling and optimizations
 - [ ] Multilingual support and advanced features
 - [x] Enhanced functionality through MCP server integration
+

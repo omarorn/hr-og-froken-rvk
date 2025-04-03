@@ -1,6 +1,5 @@
-
-import { supabase } from "@/integrations/supabase/client";
 import { ConversationScenario } from './chatService';
+import { getAssistantSpeech } from './assistantService';
 
 // Voice style instructions based on scenario
 const getVoiceInstructions = (scenario?: string, gender: 'female' | 'male' = 'female'): string => {
@@ -37,40 +36,8 @@ const getTextToSpeech = async (text: string, voice: string = 'alloy', instructio
     // Determine the best voice instructions based on the scenario
     const voiceInstructions = instructions || getVoiceInstructions(scenario, gender);
     
-    // Use Supabase Edge Function instead of direct API
-    const { data, error } = await supabase.functions.invoke('speech', {
-      body: {
-        text,
-        voice,
-        instructions: voiceInstructions
-      }
-    });
-
-    if (error) {
-      throw new Error(`Text-to-speech error: ${error.message}`);
-    }
-
-    if (!data) {
-      throw new Error('No audio data returned from speech service');
-    }
-
-    // Convert the response data to ArrayBuffer safely
-    const base64Data = data as string;
-    
-    // Safely decode base64 to avoid stack issues
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    
-    // Process in smaller chunks to avoid stack issues
-    const chunkSize = 1024;
-    for (let i = 0; i < binaryString.length; i += chunkSize) {
-      const end = Math.min(i + chunkSize, binaryString.length);
-      for (let j = i; j < end; j++) {
-        bytes[j] = binaryString.charCodeAt(j);
-      }
-    }
-    
-    return bytes.buffer;
+    // Use the AssistantService to generate speech
+    return await getAssistantSpeech(text, voice, voiceInstructions, scenario, gender);
   } catch (error) {
     console.error('Text-to-speech error:', error);
     throw error;
