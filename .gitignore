@@ -22,3 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+ai-phone-agent/cloudflare/agents-starter/.dev.vars.example
+ai-phone-agent/cloudflare/agents-starter/.gitignore
