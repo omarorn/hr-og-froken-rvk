@@ -3,7 +3,7 @@
  * Utility functions for Straeto services
  */
 
-import { supabase, SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_PUBLIC_KEY } from '@/integrations/supabase/client';
 
 /**
  * Checks if a value is a StraetoError

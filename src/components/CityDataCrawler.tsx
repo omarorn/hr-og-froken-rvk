@@ -30,7 +30,6 @@ const CityDataCrawler: React.FC = () => {
   const [savedRecords, setSavedRecords] = useState<ScrapedDataRecord[]>([]);
   const [isLoadingSaved, setIsLoadingSaved] = useState<boolean>(false);
 
-  // Load previously saved records from Supabase
   useEffect(() => {
     const fetchSavedRecords = async () => {
       setIsLoadingSaved(true);
@@ -48,7 +47,6 @@ const CityDataCrawler: React.FC = () => {
     fetchSavedRecords();
   }, []);
 
-  // Handle form submission to scrape a website
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -61,7 +59,6 @@ const CityDataCrawler: React.FC = () => {
       setIsLoading(true);
       setProgress(0);
       
-      // Simulate progress updates
       const progressInterval = setInterval(() => {
         setProgress(prev => {
           const newProgress = prev + 5;
@@ -69,7 +66,6 @@ const CityDataCrawler: React.FC = () => {
         });
       }, 300);
 
-      // Try to use the MCP server first, with fallback to edge function
       const scrapeResult = await scrapingService.scrapeWebsite(url, maxPages);
 
       clearInterval(progressInterval);
@@ -82,7 +78,6 @@ const CityDataCrawler: React.FC = () => {
 
       const scrapedData = scrapeResult.data;
       
-      // Format the result for display
       const result: CrawlResult = {
         id: scrapedData.recordId,
         status: 'success',
@@ -98,7 +93,6 @@ const CityDataCrawler: React.FC = () => {
       
       toast.success(`Successfully scraped ${result.domain}`);
       
-      // Refresh saved records if the data was saved to the database
       if (result.savedToDb) {
         const records = await scrapingService.getAllScrapedData();
         setSavedRecords(records);
@@ -112,7 +106,6 @@ const CityDataCrawler: React.FC = () => {
     }
   };
 
-  // Helper to format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString('is-IS', {
@@ -124,7 +117,6 @@ const CityDataCrawler: React.FC = () => {
     });
   };
 
-  // Handle deleting a saved record
   const handleDeleteRecord = async (id: string) => {
     try {
       const success = await scrapingService.deleteScrapedData(id);

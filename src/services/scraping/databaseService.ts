@@ -1,5 +1,4 @@
-
-import { supabase, ScrapedDataRecord, SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, SUPABASE_PUBLIC_KEY, ScrapedDataRecord } from "@/integrations/supabase/client";
 
 /**
  * Service for interacting with the scraped data in the database
@@ -14,7 +13,7 @@ export const databaseService = {
   async saveScrapedData(url: string, scrapedData: any): Promise<ScrapedDataRecord | null> {
     try {
       // Use REST API for both the primary attempt and fallback
-      const insertResult = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data`, {
+      const insertResult = await fetch(`${SUPABASE_URL}/rest/v1/scraped_data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +49,7 @@ export const databaseService = {
   async getAllScrapedData(): Promise<ScrapedDataRecord[]> {
     try {
       // Use raw fetch to work around TypeScript issues
-      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data?order=scraped_at.desc`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_data?order=scraped_at.desc`, {
         headers: {
           'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
           'apikey': SUPABASE_PUBLIC_KEY,
@@ -77,7 +76,7 @@ export const databaseService = {
   async getScrapedDataById(id: string): Promise<ScrapedDataRecord | null> {
     try {
       // Use raw fetch to work around TypeScript issues
-      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data?id=eq.${id}&limit=1`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_data?id=eq.${id}&limit=1`, {
         headers: {
           'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
           'apikey': SUPABASE_PUBLIC_KEY,
@@ -104,7 +103,7 @@ export const databaseService = {
   async deleteScrapedData(id: string): Promise<boolean> {
     try {
       // Use raw fetch to work around TypeScript issues
-      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/scraped_data?id=eq.${id}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_data?id=eq.${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`,
@@ -172,7 +171,7 @@ export const databaseService = {
       const transformedData = data.map(dataTransform);
       
       // Use REST API instead of supabase client to avoid type issues
-      const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/${tableName}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,7 +3,7 @@
  * Service for fetching Straeto data from local database
  */
 
-import { SUPABASE_PUBLIC_URL, SUPABASE_PUBLIC_KEY } from '@/integrations/supabase/client';
+import { SUPABASE_URL, SUPABASE_PUBLIC_KEY } from '@/integrations/supabase/client';
 import { BusRoute, BusLocation, StraetoRoute, StraetoRealtimeData, StraetoError } from './types';
 
 /**
@@ -11,7 +11,7 @@ import { BusRoute, BusLocation, StraetoRoute, StraetoRealtimeData, StraetoError 
  */
 export const getLocalBusRoutes = async (): Promise<StraetoRoute[] | StraetoError> => {
   try {
-    const response = await fetch(`${SUPABASE_PUBLIC_URL}/rest/v1/bus_routes?select=*`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/bus_routes?select=*`, {
       headers: {
         'apikey': SUPABASE_PUBLIC_KEY,
         'Authorization': `Bearer ${SUPABASE_PUBLIC_KEY}`
@@ -47,7 +47,7 @@ export const getLocalBusRoutes = async (): Promise<StraetoRoute[] | StraetoError
  */
 export const getLocalBusLocations = async (routeId?: string): Promise<StraetoRealtimeData[] | StraetoError> => {
   try {
-    let url = `${SUPABASE_PUBLIC_URL}/rest/v1/bus_locations?select=*&order=updated_at.desc`;
+    let url = `${SUPABASE_URL}/rest/v1/bus_locations?select=*&order=updated_at.desc`;
     
     if (routeId) {
       url += `&route_id=eq.${routeId}`;
