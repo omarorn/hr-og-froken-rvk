@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BusRouteMap from '@/components/BusRouteMap';
 import { BusSchedule } from '@/components/bus';
@@ -9,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Bus, MapPin, Info } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 const BusTracking: React.FC = () => {
   const [selectedRouteId, setSelectedRouteId] = useState<string>('');
@@ -29,6 +29,17 @@ const BusTracking: React.FC = () => {
     }
   });
 
+  useEffect(() => {
+    if (routes && routes.length > 0 && !selectedRouteId) {
+      const defaultRoute = routes.find(route => route.shortName === '14') || routes[0];
+      setSelectedRouteId(defaultRoute.id);
+      toast({
+        title: "Default route selected",
+        description: `Route ${defaultRoute.shortName} has been selected automatically.`,
+      });
+    }
+  }, [routes, selectedRouteId]);
+
   const handleRouteChange = (routeId: string) => {
     setSelectedRouteId(routeId);
   };
@@ -36,6 +47,38 @@ const BusTracking: React.FC = () => {
   const getSelectedRoute = (): StraetoRoute | undefined => {
     return routes?.find(route => route.id === selectedRouteId);
   };
+
+  useEffect(() => {
+    const testStraetoApi = async () => {
+      try {
+        const testResponse = await getStraetoRoutes();
+        
+        if ('error' in testResponse) {
+          console.error("API Test Failed:", testResponse.error);
+          toast({
+            title: "API Test Failed",
+            description: `Straeto API test failed: ${testResponse.error}`,
+            variant: "destructive"
+          });
+        } else {
+          console.log("API Test Successful:", testResponse);
+          toast({
+            title: "API Test Successful",
+            description: `Straeto API returned ${testResponse.length} routes.`,
+          });
+        }
+      } catch (error) {
+        console.error("API Test Error:", error);
+        toast({
+          title: "API Test Error",
+          description: "Unexpected error when testing Straeto API",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    testStraetoApi();
+  }, []);
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">

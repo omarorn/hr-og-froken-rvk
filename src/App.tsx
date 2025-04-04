@@ -1,30 +1,46 @@
+import React from 'react';
+import { RouterProvider } from 'react-router-dom';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import BusTracking from "./pages/BusTracking";
+import { Toaster } from "@/components/ui/toaster"
+import { router } from './router';
+import { Button } from './components/ui/button';
+import { runApiTest } from './services/straeto/apiTester';
+import { toast } from './components/ui/use-toast';
 
-const queryClient = new QueryClient();
+function App() {
+  const handleTestApi = async () => {
+    toast({
+      title: "API Test Started",
+      description: "Testing Straeto API endpoints. Check console for details.",
+    });
+    
+    try {
+      await runApiTest();
+      toast({
+        title: "API Test Complete",
+        description: "Check browser console for detailed results.",
+      });
+    } catch (error) {
+      toast({
+        title: "API Test Failed",
+        description: "An unexpected error occurred during testing.",
+        variant: "destructive"
+      });
+    }
+  };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button onClick={handleTestApi} variant="outline" className="bg-gray-100">
+          Test Straeto API
+        </Button>
+      </div>
+      
+      <RouterProvider router={router} />
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/bus-tracking" element={<BusTracking />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </div>
+  );
+}
 
 export default App;

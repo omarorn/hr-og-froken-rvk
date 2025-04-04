@@ -54,6 +54,18 @@ export const getBusRoute = async (routeNumber: string): Promise<BusRoute | null>
           { id: "90000295", name: "Hlemmur", coordinates: { lat: 64.1428, lng: -21.9141 } },
           { id: "90000060", name: "Háskóli Íslands", coordinates: { lat: 64.1395, lng: -21.9507 } }
         ]
+      },
+      "14": {
+        routeNumber: "14",
+        name: "Grandi - Kringlan - Verzló",
+        schedule: ["06:15-23:15"],
+        frequency: "Every 15 minutes",
+        stops: [
+          { id: "90000190", name: "Grandi", coordinates: { lat: 64.1515, lng: -21.9545 } },
+          { id: "90000295", name: "Hlemmur", coordinates: { lat: 64.1428, lng: -21.9141 } },
+          { id: "90000830", name: "Kringlan", coordinates: { lat: 64.1306, lng: -21.8937 } },
+          { id: "90000920", name: "Verzló", coordinates: { lat: 64.1215, lng: -21.8855 } }
+        ]
       }
     };
     
