@@ -12,7 +12,7 @@ import BusRouteInfo from '@/components/BusRouteInfo';
 import WasteCollectionInfo from '@/components/WasteCollectionInfo';
 import CityDataCrawler from '@/components/CityDataCrawler';
 import { Link } from 'react-router-dom';
-import { Bus, Map, Info, Database } from 'lucide-react';
+import { Bus, Map, Info, Database, PhoneCall } from 'lucide-react';
 
 const Index = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -73,7 +73,7 @@ const Index = () => {
       </header>
       
       <main className="py-8 px-4 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Link to="/">
             <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16">
               <Info className="h-5 w-5" />
@@ -110,6 +110,16 @@ const Index = () => {
               <div className="text-left">
                 <div className="font-medium">Gögn</div>
                 <div className="text-xs text-muted-foreground">Opið gagnasafn</div>
+              </div>
+            </Button>
+          </Link>
+          
+          <Link to="/ai-phone-agent">
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16 bg-iceland-blue/10 border-iceland-blue">
+              <PhoneCall className="h-5 w-5 text-iceland-blue" />
+              <div className="text-left">
+                <div className="font-medium">AI Sími</div>
+                <div className="text-xs text-muted-foreground">Raddaðstoðarmaður</div>
               </div>
             </Button>
           </Link>
