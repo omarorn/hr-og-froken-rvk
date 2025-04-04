@@ -12,7 +12,7 @@ import BusRouteInfo from '@/components/BusRouteInfo';
 import WasteCollectionInfo from '@/components/WasteCollectionInfo';
 import CityDataCrawler from '@/components/CityDataCrawler';
 import { Link } from 'react-router-dom';
-import { Bus, Map, Info, Database, PhoneCall } from 'lucide-react';
+import { Bus, Map, Info, Database, PhoneCall, Settings } from 'lucide-react';
 
 const Index = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -114,11 +114,11 @@ const Index = () => {
             </Button>
           </Link>
           
-          <Link to="/ai-phone-agent">
+          <Link to="/ai-phone-landing">
             <Button variant="outline" className="w-full flex items-center justify-center gap-2 h-16 bg-iceland-blue/10 border-iceland-blue">
-              <PhoneCall className="h-5 w-5 text-iceland-blue" />
+              <Settings className="h-5 w-5 text-iceland-blue" />
               <div className="text-left">
-                <div className="font-medium">AI Sími</div>
+                <div className="font-medium">Ný prufusíða</div>
                 <div className="text-xs text-muted-foreground">Raddaðstoðarmaður</div>
               </div>
             </Button>
