@@ -10,12 +10,23 @@ export const useGreeting = (gender: 'female' | 'male') => {
   const getAccurateTimeBasedGreeting = async (): Promise<string> => {
     const name = gender === 'female' ? 'Rósa' : 'Birkir';
     
+    // Check if we've already greeted the user in this session
+    const sessionGreeted = sessionStorage.getItem(`greeting_${gender}`);
+    if (sessionGreeted) {
+      console.log("Using cached greeting to prevent repetition");
+      return sessionGreeted;
+    }
+    
     // First try to get an accurate greeting from MCP server
     try {
       const serverTime = await getServerBasedTime();
       if (serverTime) {
         console.log("Using MCP server time-based greeting:", serverTime.greeting);
-        return `${serverTime.greeting}, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+        const greeting = `${serverTime.greeting}, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+        
+        // Save to session storage to prevent repetition
+        sessionStorage.setItem(`greeting_${gender}`, greeting);
+        return greeting;
       }
     } catch (error) {
       console.error("Error getting server-based greeting:", error);
@@ -23,16 +34,21 @@ export const useGreeting = (gender: 'female' | 'male') => {
     
     // Fallback to local time
     const hour = new Date().getHours();
+    let greeting;
     
     if (hour >= 5 && hour < 12) {
-      return `Góðan morgun, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+      greeting = `Góðan morgun, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
     } else if (hour >= 12 && hour < 18) {
-      return `Góðan dag, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+      greeting = `Góðan dag, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
     } else if (hour >= 18 && hour < 22) {
-      return `Gott kvöld, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
+      greeting = `Gott kvöld, ég heiti ${name}. Hvernig get ég aðstoðað þig í dag?`;
     } else {
-      return `Góða nótt, ég heiti ${name}. Hvernig get ég aðstoðað þig?`;
+      greeting = `Góða nótt, ég heiti ${name}. Hvernig get ég aðstoðað þig?`;
     }
+    
+    // Save to session storage to prevent repetition
+    sessionStorage.setItem(`greeting_${gender}`, greeting);
+    return greeting;
   };
 
   useEffect(() => {

@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, Mic, Settings, ArrowLeft, MessageSquare, Globe, AlertCircle } from 'lucide-react';
+import { Phone, Mic, Settings, ArrowLeft, MessageSquare, Globe, AlertCircle, FileBadge } from 'lucide-react';
 import VoiceAssistant from '@/components/VoiceAssistant';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import LogsViewer from '@/components/LogsViewer';
 
 const AIPhoneLanding = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -19,6 +20,7 @@ const AIPhoneLanding = () => {
     darkMode: false,
     videoChat: false
   });
+  const [showLogs, setShowLogs] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     supabase: boolean;
     assistant: boolean;
@@ -126,7 +128,16 @@ const AIPhoneLanding = () => {
               AI Raddaðstoðarmaður - Prufusíða
             </h1>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            <Button 
+              size="sm"
+              variant="outline"
+              onClick={() => setShowLogs(!showLogs)}
+              className="flex items-center"
+            >
+              <FileBadge className="h-4 w-4 mr-1" />
+              {showLogs ? 'Fela skrár' : 'Sýna skrár'}
+            </Button>
             <Switch 
               id="dark-mode" 
               checked={settings.darkMode}
@@ -191,6 +202,12 @@ const AIPhoneLanding = () => {
                   Birkir
                 </Button>
               </div>
+              
+              {showLogs && (
+                <div className="mt-6 mb-4">
+                  <LogsViewer />
+                </div>
+              )}
               
               <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-medium">Samþættingar og API</h3>
@@ -286,6 +303,7 @@ const AIPhoneLanding = () => {
               <VoiceAssistant
                 assistantName={gender === 'female' ? 'Rósa' : 'Birkir'}
                 gender={gender}
+                key={gender} // Add key to force re-mounting when gender changes
               />
             </div>
           </div>

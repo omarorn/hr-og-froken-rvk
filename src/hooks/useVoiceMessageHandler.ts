@@ -20,6 +20,9 @@ export const useVoiceMessageHandler = ({
 
   const handleTranscriptionComplete = async (transcribedText: string) => {
     if (!transcribedText.trim()) return;
+    
+    // Immediately handle sending the transcribed text
+    await handleSendMessage(transcribedText);
   };
 
   const handleSendMessage = async (currentTranscribedText: string) => {
