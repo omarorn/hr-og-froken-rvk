@@ -7,7 +7,8 @@ import VoiceControlPanel from '../VoiceControlPanel';
 import VideoChat from '../VideoChat';
 import { Message } from '@/services/messageService';
 import { ConversationScenario } from '@/services/chatService';
-import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
 
 interface AssistantContainerProps {
   assistantName: string;
@@ -16,7 +17,7 @@ interface AssistantContainerProps {
   isSpeaking: boolean;
   isListening: boolean;
   isProcessing: boolean;
-  isGreetingLoading: boolean; // Add prop for greeting loading state
+  isGreetingLoading: boolean;
   autoDetectVoice: boolean;
   showVideoChat: boolean;
   audioLevel: number;
@@ -28,6 +29,7 @@ interface AssistantContainerProps {
   toggleSubtitles: () => void;
   showSubtitles: boolean;
   currentScenario?: string;
+  userHasGreeted?: boolean; // Add this prop
   mcpStatus?: {
     supabase: boolean;
     code: boolean;
@@ -42,7 +44,7 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
   isSpeaking,
   isListening,
   isProcessing,
-  isGreetingLoading, // Destructure the new prop
+  isGreetingLoading,
   autoDetectVoice,
   showVideoChat,
   audioLevel,
@@ -53,8 +55,8 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
   toggleVideoChat,
   toggleSubtitles,
   showSubtitles,
-  currentScenario = ConversationScenario.GENERAL
-,
+  currentScenario = ConversationScenario.GENERAL,
+  userHasGreeted = false, // Default to false
   mcpStatus = { supabase: false, code: false, gSuite: false }
 }) => {
   // Get container styling based on scenario
@@ -170,6 +172,20 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
       {isGreetingLoading && messages.length === 0 ? (
         <div className="p-6 h-96 flex items-center justify-center">
           <Skeleton className="h-10 w-40" />
+        </div>
+      ) : messages.length === 0 && !userHasGreeted ? (
+        <div className="p-6 h-96 flex flex-col items-center justify-center space-y-4">
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-w-md">
+            <div className="flex items-start">
+              <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 mr-2" />
+              <div>
+                <h3 className="text-sm font-medium text-blue-800">Segðu hæ til að byrja</h3>
+                <p className="text-xs text-blue-600 mt-1">
+                  Segðu "Hæ", "Halló" eða "Góðan dag" til að hefja samtal við {assistantName}.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <ConversationHistory messages={messages} />

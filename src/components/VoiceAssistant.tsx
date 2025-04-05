@@ -36,9 +36,10 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   } = messageService;
   
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
+  const [userHasGreeted, setUserHasGreeted] = useState<boolean>(false); // Add state to track if user has greeted
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
-  const { initialGreeting, isLoading: isGreetingLoading } = useGreeting(gender);
+  const { initialGreeting, isLoading: isGreetingLoading, shouldAutoGreet } = useGreeting(gender);
   
   // Initialize MCP servers
   const { supabaseMCP, codeMCP, gSuiteMCP } = useMCP();
@@ -86,7 +87,37 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   };
 
   const { isListening, hasPermission, initializeVoiceDetection } = useAudioRecording({
-    onTranscriptionComplete: handleTranscriptionComplete,
+    onTranscriptionComplete: (text) => {
+      // Check if user's message contains a greeting
+      const lowerText = text.toLowerCase();
+      if (
+        !userHasGreeted && 
+        (lowerText.includes('halló') || 
+         lowerText.includes('hæ') || 
+         lowerText.includes('góðan dag') || 
+         lowerText.includes('hallo') || 
+         lowerText.includes('hi') || 
+         lowerText.includes('sæl') || 
+         lowerText.includes('sæll'))
+      ) {
+        setUserHasGreeted(true);
+        // If this is the first greeting and we haven't done the initial greeting yet,
+        // do it now after the user's greeting is processed
+        if (!initialGreetingDone && !isGreetingLoading && initialGreeting) {
+          setTimeout(() => {
+            const greeting = setInitialGreeting(initialGreeting);
+            if (!hasError) {
+              setActiveSubtitleText(initialGreeting);
+              speakMessage(greeting);
+            }
+            setInitialGreetingDone(true);
+          }, 1000);
+        }
+      }
+      
+      // Continue with normal transcription handling
+      handleTranscriptionComplete(text);
+    },
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
     onAudioLevelChange: handleAudioLevelChange,
@@ -95,6 +126,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   });
 
   const handleSendMessageWrapper = async () => {
+    // Check if the current transcribed text is a greeting
+    const lowerText = currentTranscribedText.toLowerCase();
+    if (
+      !userHasGreeted && 
+      (lowerText.includes('halló') || 
+       lowerText.includes('hæ') || 
+       lowerText.includes('góðan dag') || 
+       lowerText.includes('hallo') || 
+       lowerText.includes('hi') || 
+       lowerText.includes('sæl') || 
+       lowerText.includes('sæll'))
+    ) {
+      setUserHasGreeted(true);
+    }
+    
     const updatedText = await handleSendMessage(currentTranscribedText);
     setCurrentTranscribedText(updatedText);
   };
@@ -108,19 +154,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     });
   }, [supabaseMCP.status, codeMCP.status, gSuiteMCP.status]);
 
-  useEffect(() => {
-    // Load initial greeting only once
-    if (!initialGreetingDone && !isGreetingLoading && initialGreeting) {
-      setTimeout(() => {
-        const greeting = setInitialGreeting(initialGreeting);
-        if (!hasError) {
-          setActiveSubtitleText(initialGreeting);
-          speakMessage(greeting);
-        }
-        setInitialGreetingDone(true);
-      }, 1000);
-    }
-  }, [gender, initialGreetingDone, initialGreeting, isGreetingLoading, setInitialGreeting, speakMessage, hasError, setActiveSubtitleText]);
+  // We are removing the auto-greeting behavior here
+  // Only shouldAutoGreet would trigger automatic greeting, which defaults to false
 
   // Reset subtitle text when speech ends
   useEffect(() => {
@@ -168,6 +203,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         toggleSubtitles={toggleSubtitles}
         showSubtitles={showSubtitles}
         currentScenario={currentScenario}
+        userHasGreeted={userHasGreeted} // Pass this to AssistantContainer
         mcpStatus={{
           supabase: supabaseMCP.status.connected,
           code: codeMCP.status.connected,
