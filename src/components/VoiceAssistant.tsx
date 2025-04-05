@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MessageSubtitles from './MessageSubtitles';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
@@ -16,6 +15,7 @@ import BackgroundContainer from './voice/BackgroundContainer';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useHealthCheck } from '@/services/healthCheckService';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -36,7 +36,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     assistantId,
     threadId,
     initError,
-    resetAssistant
+    resetAssistant,
+    connectionStatus
   } = messageService;
   
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
@@ -171,9 +172,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   }, [isSpeaking, setActiveSubtitleText]);
 
-  // Handle reconnection attempt
+  // Add health check service
+  const { diagnoseAndReport } = useHealthCheck();
+  
+  // Update the handleReconnectAttempt function
   const handleReconnectAttempt = async () => {
-    await resetAssistant();
+    toast.info('Reyni að tengjast aftur...', { duration: 2000 });
+    await diagnoseAndReport(); // Run diagnostics first
+    await resetAssistant();    // Then try to reset the assistant
   };
 
   // Render a badge if we have an active assistant

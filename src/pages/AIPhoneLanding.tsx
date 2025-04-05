@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, Mic, Settings, ArrowLeft, MessageSquare, Globe, AlertCircle, FileBadge } from 'lucide-react';
+import { Phone, Mic, Settings, ArrowLeft, MessageSquare, Globe, AlertCircle, FileBadge, RefreshCw } from 'lucide-react';
 import VoiceAssistant from '@/components/VoiceAssistant';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import LogsViewer from '@/components/LogsViewer';
 import MainNavigation from '@/components/MainNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useHealthCheck } from '@/services/healthCheckService';
 
 const AIPhoneLanding = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -33,12 +33,11 @@ const AIPhoneLanding = () => {
     speech: false
   });
   const isMobile = useIsMobile();
+  const { diagnoseAndReport } = useHealthCheck();
 
-  // Check connection to Supabase functions
   useEffect(() => {
     const checkConnections = async () => {
       try {
-        // Check Supabase connection
         const { data: pingData, error: pingError } = await supabase.functions.invoke('time-mcp', {
           body: { action: 'ping' }
         });
@@ -48,9 +47,6 @@ const AIPhoneLanding = () => {
           supabase: !pingError && pingData?.status === 'ok'
         }));
 
-        // We'll use the presence or absence of errors to determine status in the next checks
-        
-        // Check assistant API
         try {
           const { data: assistantData, error: assistantError } = await supabase.functions.invoke('assistants', {
             body: { action: 'status' }
@@ -65,7 +61,6 @@ const AIPhoneLanding = () => {
           setConnectionStatus(prev => ({ ...prev, assistant: false }));
         }
         
-        // Check speech API
         try {
           const { data: speechData, error: speechError } = await supabase.functions.invoke('speech', {
             body: { action: 'status' }
@@ -93,7 +88,6 @@ const AIPhoneLanding = () => {
     checkConnections();
   }, []);
 
-  // Helper function to render connection alert if needed
   const renderConnectionAlert = () => {
     const allConnected = connectionStatus.supabase && connectionStatus.assistant && connectionStatus.speech;
     
@@ -111,6 +105,15 @@ const AIPhoneLanding = () => {
             {!connectionStatus.speech && <li>Tengingu við raddþjónustu vantar</li>}
           </ul>
           <p className="mt-2">Prófaðu grunnviðmótið eða komdu aftur síðar.</p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="mt-2"
+            onClick={() => diagnoseAndReport()}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Greina tengingarvandamál
+          </Button>
         </AlertDescription>
       </Alert>
     );
@@ -343,7 +346,7 @@ const AIPhoneLanding = () => {
               <VoiceAssistant
                 assistantName={gender === 'female' ? 'Rósa' : 'Birkir'}
                 gender={gender}
-                key={gender} // Add key to force re-mounting when gender changes
+                key={gender}
               />
             </div>
           </div>

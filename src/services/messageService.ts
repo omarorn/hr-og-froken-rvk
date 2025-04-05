@@ -21,35 +21,19 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [initError, setInitError] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   
   useEffect(() => {
     const init = async () => {
       try {
         if (retryCount > 3) {
           setInitError(true);
+          setConnectionStatus('error');
           console.log('Max retry attempts reached, using local fallback');
           return;
         }
         
-        const { assistantId, threadId } = await initializeAssistant();
-        setAssistantId(assistantId);
-        setThreadId(threadId);
-        setInitError(false);
-        console.log('Assistant initialized:', { assistantId, threadId });
-      } catch (error) {
-        console.error('Failed to initialize assistant:', error);
-        setRetryCount(prev => prev + 1);
-        setInitError(true);
-        
-        if (retryCount === 0) {
-          toast.error('Villa við að tengja aðstoðarmann. Reyndu aftur.', {
-            duration: 5000,
-            action: {
-              label: 'Reyna aftur',
-              onClick: () => init()
-            }
-          });
-        }
+        setConnectionStatus('connecting');
         
         try {
           const storedAssistantId = localStorage.getItem('assistantId');
@@ -62,6 +46,53 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
           }
         } catch (storageError) {
           console.error('Failed to access localStorage:', storageError);
+        }
+        
+        const { assistantId: newAssistantId, threadId: newThreadId } = await initializeAssistant();
+        
+        if (newAssistantId && newThreadId) {
+          setAssistantId(newAssistantId);
+          setThreadId(newThreadId);
+          
+          try {
+            localStorage.setItem('assistantId', newAssistantId);
+            localStorage.setItem('threadId', newThreadId);
+          } catch (storageError) {
+            console.error('Failed to save to localStorage:', storageError);
+          }
+          
+          setInitError(false);
+          setConnectionStatus('connected');
+          console.log('Assistant initialized:', { assistantId: newAssistantId, threadId: newThreadId });
+        }
+      } catch (error) {
+        console.error('Failed to initialize assistant:', error);
+        setRetryCount(prev => prev + 1);
+        setInitError(true);
+        setConnectionStatus('error');
+        
+        try {
+          fetch('/ai-phone-agent/logs.nd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              error: error?.message || 'Unknown error',
+              operation: 'Assistant Initialization',
+              timestamp: new Date().toISOString()
+            })
+          }).catch(() => {
+          });
+        } catch (_) {
+        }
+        
+        if (retryCount === 0) {
+          toast.error('Villa við að tengja aðstoðarmann. Reyndu aftur.', {
+            duration: 5000,
+            action: {
+              label: 'Reyna aftur',
+              onClick: () => init()
+            }
+          });
         }
       }
     };
@@ -214,17 +245,33 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
     setThreadId(null);
     setRetryCount(0);
     setInitError(false);
+    setConnectionStatus('connecting');
     
     try {
       const { assistantId, threadId } = await initializeAssistant();
-      setAssistantId(assistantId);
-      setThreadId(threadId);
-      toast.success('Tenging við aðstoðarmann hefur verið endurstillt.', { duration: 3000 });
-      return true;
+      
+      if (assistantId && threadId) {
+        setAssistantId(assistantId);
+        setThreadId(threadId);
+        
+        try {
+          localStorage.setItem('assistantId', assistantId);
+          localStorage.setItem('threadId', threadId);
+        } catch (storageError) {
+          console.error('Failed to save to localStorage:', storageError);
+        }
+        
+        toast.success('Tenging við aðstoðarmann hefur verið endurstillt.', { duration: 3000 });
+        setConnectionStatus('connected');
+        return true;
+      } else {
+        throw new Error('Failed to get valid assistant credentials');
+      }
     } catch (error) {
       console.error('Failed to reset assistant:', error);
       toast.error('Villa við að endurstilla aðstoðarmann.', { duration: 4000 });
       setInitError(true);
+      setConnectionStatus('error');
       return false;
     }
   };
@@ -241,6 +288,7 @@ export const useMessageService = (gender: 'female' | 'male' = 'female') => {
     assistantId,
     threadId,
     initError,
-    resetAssistant
+    resetAssistant,
+    connectionStatus
   };
 };
