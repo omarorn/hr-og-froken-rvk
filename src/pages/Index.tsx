@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import VoiceAssistant from '@/components/VoiceAssistant';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import CityDataCrawler from '@/components/CityDataCrawler';
 import { Link } from 'react-router-dom';
 import MainNavigation from '@/components/MainNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Lock } from 'lucide-react';
 
 const Index = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -21,16 +21,14 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
   const isMobile = useIsMobile();
   
-  // Update time periodically
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(getCurrentTime());
-    }, 30000); // Update every 30 seconds
+    }, 30000);
     
     return () => clearInterval(timer);
   }, []);
   
-  // Format current date
   const formattedDate = formatIcelandicDate(new Date(), 'medium');
   
   return (

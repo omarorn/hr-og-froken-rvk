@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Home, Bus, Map, Phone, Lock, Menu, Globe, ArrowLeft } from 'lucide-react';
+import { Home, Bus, Map, Phone, Lock, Menu, Globe, ArrowLeft } from 'lucide-react'; // Imported Lock properly
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const MainNavigation = () => {
