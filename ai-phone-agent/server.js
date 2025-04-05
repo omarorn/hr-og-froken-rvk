@@ -13,10 +13,15 @@ app.use(bodyParser.json());
 const logFile = path.join(__dirname, 'logs.nd');
 const statusFile = path.join(__dirname, 'status.nd');
 
-// Simple logging function
-const logActivity = (message) => {
+// Simple logging function with error tracking
+const logActivity = (message, isError = false) => {
     const timestamp = new Date().toISOString();
-    const logEntry = `${timestamp} - ${message}\n`;
+    let logEntry = `${timestamp} - ${message}\n`;
+    
+    // Make errors more visible in logs
+    if (isError) {
+        logEntry = `${timestamp} - ERROR: ${message}\n`;
+    }
     
     // Append to logs file
     fs.appendFile(logFile, logEntry, (err) => {
@@ -29,12 +34,15 @@ const logActivity = (message) => {
 // Update status file
 const updateStatus = (status) => {
     const timestamp = new Date().toISOString();
-    const statusContent = `# Live Agent Status\n- Updated: ${timestamp}\n- Last call: ${status.lastCall || 'none'}\n- Last message: ${status.lastMessage || 'none'}\n- Status: ${status.status || 'ready'}\n`;
+    const statusContent = `# Live Agent Status\n- Updated: ${timestamp}\n- Last call: ${status.lastCall || 'none'}\n- Last message: ${status.lastMessage || 'none'}\n- Status: ${status.status || 'ready'}\n- Connection issues: ${status.connectionIssues ? 'Yes (' + status.connectionIssues + ')' : 'None'}\n`;
     
     fs.writeFile(statusFile, statusContent, (err) => {
         if (err) console.error('Error writing to status file:', err);
     });
 };
+
+// Capture connection issues
+let connectionIssues = [];
 
 // Initialize log files if they don't exist
 if (!fs.existsSync(logFile)) {
@@ -45,9 +53,36 @@ if (!fs.existsSync(statusFile)) {
     updateStatus({
         lastCall: 'pending',
         lastMessage: 'none',
-        status: 'initializing'
+        status: 'initializing',
+        connectionIssues: null
     });
 }
+
+// POST endpoint for client error logging
+app.post('/logs.nd', (req, res) => {
+    try {
+        const { error, operation, timestamp } = req.body;
+        
+        if (error && operation) {
+            const errorMessage = `Client error in ${operation}: ${error}`;
+            logActivity(errorMessage, true);
+            
+            // Track connection issues
+            if (!connectionIssues.includes(operation)) {
+                connectionIssues.push(operation);
+                updateStatus({
+                    status: 'degraded',
+                    connectionIssues: connectionIssues.join(', ')
+                });
+            }
+        }
+        
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Error handling client log:', err);
+        res.status(500).json({ error: 'Failed to log client error' });
+    }
+});
 
 app.post('/incoming', (req, res) => {
     logActivity("Incoming call from Twilio");
@@ -56,7 +91,8 @@ app.post('/incoming', (req, res) => {
     updateStatus({
         lastCall: 'active',
         lastMessage: 'Greeting',
-        status: 'serving'
+        status: 'serving',
+        connectionIssues: connectionIssues.length ? connectionIssues.join(', ') : null
     });
     
     // Placeholder TwiML response
@@ -76,19 +112,38 @@ app.post('/incoming', (req, res) => {
         updateStatus({
             lastCall: 'completed',
             lastMessage: 'Call ended',
-            status: 'ready'
+            status: 'ready',
+            connectionIssues: connectionIssues.length ? connectionIssues.join(', ') : null
         });
     }, 10000);
+});
+
+// Health check endpoint
+app.get('/health-check', (req, res) => {
+    res.status(200).send('OK');
+    logActivity("Health check request");
 });
 
 // Add a status endpoint
 app.get('/status', (req, res) => {
     res.json({
-        status: 'ok',
+        status: connectionIssues.length ? 'degraded' : 'ok',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        connectionIssues: connectionIssues.length ? connectionIssues : null
     });
     logActivity("Status check");
+});
+
+// Reset connection issues endpoint
+app.post('/reset-connection-issues', (req, res) => {
+    connectionIssues = [];
+    logActivity("Connection issues reset");
+    updateStatus({
+        status: 'ready',
+        connectionIssues: null
+    });
+    res.status(200).json({ success: true });
 });
 
 // Serve log files
@@ -107,6 +162,7 @@ app.listen(PORT, () => {
     updateStatus({
         lastCall: 'none',
         lastMessage: 'none',
-        status: 'ready'
+        status: 'ready',
+        connectionIssues: null
     });
 });

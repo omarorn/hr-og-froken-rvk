@@ -5,7 +5,8 @@
 - System initialized at: 2025-04-05T03:18:44Z
 - Current version: 0.3.1
 - Agents configured: 2
-- Speech services: Available
+- Speech services: Degraded
+- Connection status: Service disruptions
 
 ## Recent Activity
 - Voice interface initialized
@@ -19,9 +20,28 @@
 - Text-to-speech error: Failed to send request to Edge Function
 - Failed to connect to Supabase MCP server: Connection timeout
 - Speech synthesis fallback activated
+- OpenAI API request failed with status 502
+- Assistant initialization failed
+- Client reported speech synthesis error
+
+## Known Issues
+- Edge Functions connectivity intermittent
+- Supabase connection timeout (possible network issues)
+- TTS service reliability below threshold (75%)
+- Assistant API authorization intermittent
+- Local speech synthesis fallback active
+- MCP server connectivity degraded
 
 ## Performance
 - Average response time: 420ms
 - Speech recognition accuracy: 92%
 - Messages processed: 14
+- Failed requests: 5
+- Successful fallbacks: 3
 
+## Troubleshooting
+- Check browser console for detailed error reports
+- Ensure microphone permissions are granted
+- Verify network connectivity to backend services
+- Try refreshing the page to re-establish connections
+- Use the text input as a fallback when voice recognition fails
