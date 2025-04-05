@@ -14,6 +14,8 @@ import { useVoiceMessageHandler } from '@/hooks/useVoiceMessageHandler';
 import { useMCP } from '@/hooks/useMCP';
 import BackgroundContainer from './voice/BackgroundContainer';
 import { Badge } from '@/components/ui/badge';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -32,14 +34,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     setInitialGreeting,
     currentScenario,
     assistantId,
-    threadId
+    threadId,
+    initError,
+    resetAssistant
   } = messageService;
   
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
   const [userHasGreeted, setUserHasGreeted] = useState<boolean>(false); // Add state to track if user has greeted
   
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
-  const { initialGreeting, isLoading: isGreetingLoading, shouldAutoGreet } = useGreeting(gender);
+  const { initialGreeting, isLoading: isGreetingLoading, shouldAutoGreet, hasError: greetingError } = useGreeting(gender);
   
   // Initialize MCP servers
   const { supabaseMCP, codeMCP, gSuiteMCP } = useMCP();
@@ -74,12 +78,13 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     isProcessing,
     handleTranscriptionComplete,
     handleSendMessage,
-    handleTranscriptionError
+    handleTranscriptionError,
+    inFallbackMode
   } = useVoiceMessageHandler({
     handleUserMessage,
     speakMessage,
     setActiveSubtitleText,
-    hasError
+    hasError: hasError || greetingError || initError
   });
 
   const handleAudioLevelChange = (level: number) => {
@@ -166,6 +171,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   }, [isSpeaking, setActiveSubtitleText]);
 
+  // Handle reconnection attempt
+  const handleReconnectAttempt = async () => {
+    await resetAssistant();
+  };
+
   // Render a badge if we have an active assistant
   const renderAssistantBadge = () => {
     if (assistantId && threadId) {
@@ -174,6 +184,23 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           <Badge variant="outline" className="bg-green-50 text-green-800 border-green-300 hover:bg-green-100">
             OpenAI Assistant API
           </Badge>
+        </div>
+      );
+    } else if (initError) {
+      return (
+        <div className="fixed bottom-2 right-2 z-50 flex items-center space-x-2">
+          <Badge variant="outline" className="bg-red-50 text-red-800 border-red-300 hover:bg-red-100">
+            Staðbundinn aðstoðarmaður
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white/80 border-red-300 text-red-800 hover:bg-red-50"
+            onClick={handleReconnectAttempt}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Reyna aftur
+          </Button>
         </div>
       );
     }
@@ -209,6 +236,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           code: codeMCP.status.connected,
           gSuite: gSuiteMCP.status.connected
         }}
+        hasConnectionError={initError || inFallbackMode}
       />
       
       {showSubtitles && (

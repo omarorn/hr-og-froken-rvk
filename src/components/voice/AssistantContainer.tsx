@@ -8,7 +8,8 @@ import VideoChat from '../VideoChat';
 import { Message } from '@/services/messageService';
 import { ConversationScenario } from '@/services/chatService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, WifiOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface AssistantContainerProps {
   assistantName: string;
@@ -35,6 +36,7 @@ interface AssistantContainerProps {
     code: boolean;
     gSuite: boolean;
   };
+  hasConnectionError?: boolean; // Add prop for connection errors
 }
 
 const AssistantContainer: React.FC<AssistantContainerProps> = ({
@@ -57,11 +59,16 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
   showSubtitles,
   currentScenario = ConversationScenario.GENERAL,
   userHasGreeted = false, // Default to false
-  mcpStatus = { supabase: false, code: false, gSuite: false }
+  mcpStatus = { supabase: false, code: false, gSuite: false },
+  hasConnectionError = false
 }) => {
   // Get container styling based on scenario
   const getContainerStyling = () => {
     const baseStyles = "w-full max-w-2xl backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border";
+    
+    if (hasConnectionError) {
+      return `${baseStyles} bg-white/70 border-iceland-red/20`;
+    }
     
     switch (currentScenario) {
       case ConversationScenario.GREETING:
@@ -83,6 +90,10 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
   const getHeaderStyling = () => {
     const baseStyles = "p-6 border-b";
     
+    if (hasConnectionError) {
+      return `${baseStyles} border-iceland-red/20`;
+    }
+    
     switch (currentScenario) {
       case ConversationScenario.GREETING:
         return `${baseStyles} border-iceland-blue/10`;
@@ -101,6 +112,10 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
 
   // Get scenario badge text
   const getScenarioBadge = () => {
+    if (hasConnectionError) {
+      return "Ótengdur";
+    }
+    
     switch (currentScenario) {
       case ConversationScenario.GREETING:
         return "Ávarp";
@@ -117,6 +132,28 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
     }
   };
 
+  // Helper function to render connection error state
+  const renderConnectionError = () => {
+    if (hasConnectionError && messages.length === 0) {
+      return (
+        <div className="p-4 bg-red-50 border-l-4 border-red-500 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <WifiOff className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Tengingarvandamál</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>Ekki náðist tenging við aðstoðarmann. Svör verða staðbundin en með takmarkaða virkni.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className={getContainerStyling()}>
       <div className={`${getHeaderStyling()} flex justify-between items-center`}>
@@ -128,7 +165,7 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
           />
           
           <div className="flex items-center">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-iceland-blue/10 text-iceland-blue">
+            <span className={`text-xs px-2 py-0.5 rounded-full ${hasConnectionError ? 'bg-red-100 text-red-800' : 'bg-iceland-blue/10 text-iceland-blue'}`}>
               {getScenarioBadge()}
             </span>
             {mcpStatus.supabase && (
@@ -158,6 +195,12 @@ const AssistantContainer: React.FC<AssistantContainerProps> = ({
           toggleSubtitles={toggleSubtitles}
         />
       </div>
+      
+      {hasConnectionError && (
+        <div className="p-4 border-b border-iceland-red/10">
+          {renderConnectionError()}
+        </div>
+      )}
       
       {showVideoChat && (
         <div className="p-4 border-b border-iceland-blue/10">
