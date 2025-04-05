@@ -1,11 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, Mic, Settings, ArrowLeft, MessageSquare, Globe } from 'lucide-react';
+import { Phone, Mic, Settings, ArrowLeft, MessageSquare, Globe, AlertCircle } from 'lucide-react';
 import VoiceAssistant from '@/components/VoiceAssistant';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const AIPhoneLanding = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -16,6 +19,97 @@ const AIPhoneLanding = () => {
     darkMode: false,
     videoChat: false
   });
+  const [connectionStatus, setConnectionStatus] = useState<{
+    supabase: boolean;
+    assistant: boolean;
+    speech: boolean;
+  }>({
+    supabase: false,
+    assistant: false,
+    speech: false
+  });
+
+  // Check connection to Supabase functions
+  useEffect(() => {
+    const checkConnections = async () => {
+      try {
+        // Check Supabase connection
+        const { data: pingData, error: pingError } = await supabase.functions.invoke('time-mcp', {
+          body: { action: 'ping' }
+        });
+        
+        setConnectionStatus(prev => ({
+          ...prev,
+          supabase: !pingError && pingData?.status === 'ok'
+        }));
+
+        // We'll use the presence or absence of errors to determine status in the next checks
+        
+        // Check assistant API
+        try {
+          const { data: assistantData, error: assistantError } = await supabase.functions.invoke('assistants', {
+            body: { action: 'status' }
+          });
+          
+          setConnectionStatus(prev => ({
+            ...prev,
+            assistant: !assistantError && assistantData?.status === 'ok'
+          }));
+        } catch (e) {
+          console.error('Assistant check error:', e);
+          setConnectionStatus(prev => ({ ...prev, assistant: false }));
+        }
+        
+        // Check speech API
+        try {
+          const { data: speechData, error: speechError } = await supabase.functions.invoke('speech', {
+            body: { action: 'status' }
+          });
+          
+          setConnectionStatus(prev => ({
+            ...prev,
+            speech: !speechError && speechData?.status === 'ok'
+          }));
+        } catch (e) {
+          console.error('Speech check error:', e);
+          setConnectionStatus(prev => ({ ...prev, speech: false }));
+        }
+      } catch (e) {
+        console.error('Connection check error:', e);
+        toast.error('Ekki tókst að tengjast bakenda. Sumar aðgerðir virka ekki.');
+        setConnectionStatus({
+          supabase: false,
+          assistant: false,
+          speech: false
+        });
+      }
+    };
+    
+    checkConnections();
+  }, []);
+
+  // Helper function to render connection status alert if needed
+  const renderConnectionAlert = () => {
+    const allConnected = connectionStatus.supabase && connectionStatus.assistant && connectionStatus.speech;
+    
+    if (allConnected) return null;
+    
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Tengivandamál</AlertTitle>
+        <AlertDescription>
+          <p>Sumar aðgerðir virka ekki eins og til er ætlast vegna tengingarvandamála:</p>
+          <ul className="list-disc ml-6 mt-2">
+            {!connectionStatus.supabase && <li>Tengingu við Supabase bakenda vantar</li>}
+            {!connectionStatus.assistant && <li>Tengingu við aðstoðarmann vantar</li>}
+            {!connectionStatus.speech && <li>Tengingu við raddþjónustu vantar</li>}
+          </ul>
+          <p className="mt-2">Prófaðu grunnviðmótið eða komdu aftur síðar.</p>
+        </AlertDescription>
+      </Alert>
+    );
+  };
 
   return (
     <div className={`min-h-screen ${settings.darkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-b from-iceland-blue/20 to-iceland-lightBlue/30'}`}>
@@ -49,6 +143,8 @@ const AIPhoneLanding = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white/90'} shadow-lg rounded-xl p-6 mb-6`}>
+              {renderConnectionAlert()}
+              
               <h2 className="text-xl font-semibold mb-4">Velkomin á prufu-síðu raddaðstoðarmanns</h2>
               <p className={`${settings.darkMode ? 'text-gray-300' : 'text-iceland-darkBlue'} mb-6`}>
                 Prófaðu nýjan raddaðstoðarmann Reykjavíkurborgar með sérstillingum. Þessi síða leyfir þér að 
@@ -128,6 +224,7 @@ const AIPhoneLanding = () => {
                     id="voice-detection"
                     checked={settings.voiceDetection}
                     onCheckedChange={() => setSettings({...settings, voiceDetection: !settings.voiceDetection})}
+                    disabled={!connectionStatus.supabase || !connectionStatus.speech}
                   />
                 </div>
                 

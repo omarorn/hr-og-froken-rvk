@@ -23,7 +23,7 @@ export const useVoiceMessageHandler = ({
   };
 
   const handleSendMessage = async (currentTranscribedText: string) => {
-    if (!currentTranscribedText.trim() || isProcessing) return;
+    if (!currentTranscribedText.trim() || isProcessing) return currentTranscribedText;
     
     try {
       setIsProcessing(true);
@@ -33,6 +33,12 @@ export const useVoiceMessageHandler = ({
       if (assistantMessage && !hasError) {
         setActiveSubtitleText(assistantMessage.text);
         speakMessage(assistantMessage);
+      } else if (assistantMessage) {
+        // If we have a text response but can't speak it, show a toast
+        toast.info('Raddsvörun ekki í boði. Svör sýnd sem texti.', { 
+          duration: 3000,
+          position: 'top-center'
+        });
       }
       
       return "";
