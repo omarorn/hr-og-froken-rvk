@@ -1,14 +1,32 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "sonner";
 import { router } from './router';
 import { Button } from './components/ui/button';
 import { runApiTest } from './services/straeto/apiTester';
 import { toast } from './components/ui/use-toast';
 
 function App() {
+  // Check server status on load
+  useEffect(() => {
+    const checkServerStatus = async () => {
+      try {
+        const response = await fetch('/ai-phone-agent/health-check');
+        if (!response.ok) {
+          console.warn('AI Phone Agent server may not be running');
+        } else {
+          console.log('AI Phone Agent server is online');
+        }
+      } catch (error) {
+        console.warn('Could not connect to AI Phone Agent server:', error);
+      }
+    };
+    
+    checkServerStatus();
+  }, []);
+
   const handleTestApi = async () => {
     toast({
       title: "API Test Started",

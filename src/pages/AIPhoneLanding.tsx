@@ -10,6 +10,8 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LogsViewer from '@/components/LogsViewer';
+import MainNavigation from '@/components/MainNavigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AIPhoneLanding = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -30,6 +32,7 @@ const AIPhoneLanding = () => {
     assistant: false,
     speech: false
   });
+  const isMobile = useIsMobile();
 
   // Check connection to Supabase functions
   useEffect(() => {
@@ -90,7 +93,7 @@ const AIPhoneLanding = () => {
     checkConnections();
   }, []);
 
-  // Helper function to render connection status alert if needed
+  // Helper function to render connection alert if needed
   const renderConnectionAlert = () => {
     const allConnected = connectionStatus.supabase && connectionStatus.assistant && connectionStatus.speech;
     
@@ -118,14 +121,18 @@ const AIPhoneLanding = () => {
       <header className={`py-4 px-6 border-b ${settings.darkMode ? 'border-gray-700 bg-gray-800' : 'border-iceland-blue/10 bg-white/80 backdrop-blur-sm'}`}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              <span>Til baka</span>
-            </Link>
+            {isMobile ? (
+              <MainNavigation />
+            ) : (
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                <span>Til baka</span>
+              </Link>
+            )}
           </div>
           <div className="text-center">
             <h1 className={`text-xl font-medium ${settings.darkMode ? 'text-white' : 'text-iceland-darkBlue'}`}>
-              AI Raddaðstoðarmaður - Prufusíða
+              AI Raddaðstoðarmaður
             </h1>
           </div>
           <div className="flex items-center space-x-4">
@@ -143,7 +150,7 @@ const AIPhoneLanding = () => {
               checked={settings.darkMode}
               onCheckedChange={() => setSettings({...settings, darkMode: !settings.darkMode})}
             />
-            <Label htmlFor="dark-mode" className="ml-2">
+            <Label htmlFor="dark-mode" className="ml-2 hidden md:inline">
               {settings.darkMode ? 'Ljóst' : 'Dökkt'}
             </Label>
           </div>
@@ -151,6 +158,12 @@ const AIPhoneLanding = () => {
       </header>
 
       <main className="py-8 px-4 max-w-7xl mx-auto">
+        {!isMobile && (
+          <div className="mb-6">
+            <MainNavigation />
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white/90'} shadow-lg rounded-xl p-6 mb-6`}>
@@ -217,9 +230,12 @@ const AIPhoneLanding = () => {
                       Skoða hefðbundið viðmót
                     </Button>
                   </Link>
-                  <Button size="sm" variant="outline" disabled>
-                    API skjöl
-                  </Button>
+                  
+                  <a href="/ai-phone-agent/cloudflare/agents-starter/index.html" target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline">
+                      Cloudflare Agent
+                    </Button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -293,6 +309,30 @@ const AIPhoneLanding = () => {
                   <p className={`text-xs ${settings.darkMode ? 'text-gray-400' : 'text-iceland-darkGray'} mt-2`}>
                     Fleiri tungumál verða í boði fljótlega.
                   </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-medium mb-3">Aðgangur að skrám</h3>
+                  <div className="space-y-2">
+                    <a href="/ai-phone-agent/logs.nd" target="_blank" rel="noopener noreferrer" className="block">
+                      <Button variant="outline" size="sm" className="w-full flex items-center justify-start">
+                        <FileBadge className="h-4 w-4 mr-2" />
+                        Logs
+                      </Button>
+                    </a>
+                    <a href="/ai-phone-agent/status.nd" target="_blank" rel="noopener noreferrer" className="block">
+                      <Button variant="outline" size="sm" className="w-full flex items-center justify-start">
+                        <FileBadge className="h-4 w-4 mr-2" />
+                        Status
+                      </Button>
+                    </a>
+                    <a href="/ai-phone-agent/callflow.nd" target="_blank" rel="noopener noreferrer" className="block">
+                      <Button variant="outline" size="sm" className="w-full flex items-center justify-start">
+                        <FileBadge className="h-4 w-4 mr-2" />
+                        Callflow
+                      </Button>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Phone, Mic, Settings, ArrowLeft } from 'lucide-react';
 import VoiceAssistant from '@/components/VoiceAssistant';
+import MainNavigation from '@/components/MainNavigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AIPhoneAgent = () => {
   const [gender, setGender] = useState<'female' | 'male'>('female');
@@ -12,16 +14,21 @@ const AIPhoneAgent = () => {
     subtitles: true,
     language: 'is', // 'is' for Icelandic
   });
+  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-iceland-blue/20 to-iceland-lightBlue/30">
       <header className="py-4 px-6 border-b border-iceland-blue/10 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              <span>Til baka</span>
-            </Link>
+            {isMobile ? (
+              <MainNavigation />
+            ) : (
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                <span>Til baka</span>
+              </Link>
+            )}
           </div>
           <div className="text-center">
             <h1 className="text-xl font-medium text-iceland-darkBlue">AI Raddaðstoðarmaður</h1>
@@ -33,6 +40,12 @@ const AIPhoneAgent = () => {
       </header>
 
       <main className="py-8 px-4 max-w-7xl mx-auto">
+        {!isMobile && (
+          <div className="mb-6">
+            <MainNavigation />
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             <div className="bg-white/90 shadow-lg rounded-xl p-6 mb-6">
@@ -74,6 +87,27 @@ const AIPhoneAgent = () => {
                 >
                   Birkir
                 </Button>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-medium mb-3">Skrár og tenglar</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <a href="/ai-phone-agent/logs.nd" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Logs skrá
+                    </Button>
+                  </a>
+                  <a href="/ai-phone-agent/status.nd" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Status skrá
+                    </Button>
+                  </a>
+                  <a href="/ai-phone-agent/cloudflare/agents-starter/index.html" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Cloudflare UI
+                    </Button>
+                  </a>
+                </div>
               </div>
             </div>
           </div>

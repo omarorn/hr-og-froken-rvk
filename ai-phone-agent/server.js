@@ -3,11 +3,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cors()); // Add CORS support for cross-origin requests
 
 // Set up logging
 const logFile = path.join(__dirname, 'logs.nd');
@@ -57,6 +59,9 @@ if (!fs.existsSync(statusFile)) {
         connectionIssues: null
     });
 }
+
+// Serve static files from the cloudflare folder
+app.use('/ai-phone-agent/cloudflare', express.static(path.join(__dirname, 'cloudflare')));
 
 // POST endpoint for client error logging
 app.post('/logs.nd', (req, res) => {
@@ -144,6 +149,24 @@ app.post('/reset-connection-issues', (req, res) => {
         connectionIssues: null
     });
     res.status(200).json({ success: true });
+});
+
+// Serve Markdown files as plain text
+app.get('/*.nd', (req, res) => {
+    try {
+        const filePath = path.join(__dirname, req.path);
+        if (fs.existsSync(filePath)) {
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.type('text/plain').send(content);
+            logActivity(`Served file: ${req.path}`);
+        } else {
+            res.status(404).send('File not found');
+            logActivity(`File not found: ${req.path}`, true);
+        }
+    } catch (err) {
+        res.status(500).send('Error reading file');
+        logActivity(`Error serving file ${req.path}: ${err.message}`, true);
+    }
 });
 
 // Serve log files
