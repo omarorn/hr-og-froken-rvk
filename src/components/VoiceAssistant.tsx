@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useHealthCheck } from '@/services/healthCheckService';
+import { toast } from 'sonner';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -41,12 +42,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   } = messageService;
   
   const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
-  const [userHasGreeted, setUserHasGreeted] = useState<boolean>(false); // Add state to track if user has greeted
-  
+  const [userHasGreeted, setUserHasGreeted] = useState<boolean>(false);
+
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
   const { initialGreeting, isLoading: isGreetingLoading, shouldAutoGreet, hasError: greetingError } = useGreeting(gender);
   
-  // Initialize MCP servers
   const { supabaseMCP, codeMCP, gSuiteMCP } = useMCP();
   
   const {
@@ -63,7 +63,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     handleTranscriptionUpdate
   } = useVoiceAssistantUI();
 
-  // Get the permission dialog hook BEFORE using its values
   const {
     showPermissionDialog,
     setShowPermissionDialog,
@@ -94,7 +93,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
   const { isListening, hasPermission, initializeVoiceDetection } = useAudioRecording({
     onTranscriptionComplete: (text) => {
-      // Check if user's message contains a greeting
       const lowerText = text.toLowerCase();
       if (
         !userHasGreeted && 
@@ -107,8 +105,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
          lowerText.includes('sæll'))
       ) {
         setUserHasGreeted(true);
-        // If this is the first greeting and we haven't done the initial greeting yet,
-        // do it now after the user's greeting is processed
         if (!initialGreetingDone && !isGreetingLoading && initialGreeting) {
           setTimeout(() => {
             const greeting = setInitialGreeting(initialGreeting);
@@ -121,18 +117,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         }
       }
       
-      // Continue with normal transcription handling
       handleTranscriptionComplete(text);
     },
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
     onAudioLevelChange: handleAudioLevelChange,
     autoDetectVoice,
-    language: 'is' // Always use Icelandic
+    language: 'is'
   });
 
   const handleSendMessageWrapper = async () => {
-    // Check if the current transcribed text is a greeting
     const lowerText = currentTranscribedText.toLowerCase();
     if (
       !userHasGreeted && 
@@ -151,7 +145,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     setCurrentTranscribedText(updatedText);
   };
 
-  // Log MCP server status
   useEffect(() => {
     console.log('MCP Server Status:', {
       supabase: supabaseMCP.status.connected ? 'Connected' : 'Disconnected',
@@ -160,10 +153,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     });
   }, [supabaseMCP.status, codeMCP.status, gSuiteMCP.status]);
 
-  // We are removing the auto-greeting behavior here
-  // Only shouldAutoGreet would trigger automatic greeting, which defaults to false
-
-  // Reset subtitle text when speech ends
   useEffect(() => {
     if (!isSpeaking) {
       setTimeout(() => {
@@ -172,17 +161,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     }
   }, [isSpeaking, setActiveSubtitleText]);
 
-  // Add health check service
   const { diagnoseAndReport } = useHealthCheck();
   
-  // Update the handleReconnectAttempt function
   const handleReconnectAttempt = async () => {
     toast.info('Reyni að tengjast aftur...', { duration: 2000 });
-    await diagnoseAndReport(); // Run diagnostics first
-    await resetAssistant();    // Then try to reset the assistant
+    await diagnoseAndReport();
+    await resetAssistant();
   };
 
-  // Render a badge if we have an active assistant
   const renderAssistantBadge = () => {
     if (assistantId && threadId) {
       return (
@@ -236,7 +222,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         toggleSubtitles={toggleSubtitles}
         showSubtitles={showSubtitles}
         currentScenario={currentScenario}
-        userHasGreeted={userHasGreeted} // Pass this to AssistantContainer
+        userHasGreeted={userHasGreeted}
         mcpStatus={{
           supabase: supabaseMCP.status.connected,
           code: codeMCP.status.connected,
