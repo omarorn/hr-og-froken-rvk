@@ -22,9 +22,8 @@ export const useHealthCheck = () => {
     
     // Check Supabase connection
     try {
-      // Instead of querying a non-existent 'health_check' table, 
-      // use an existing table or just ping Supabase
-      const { data, error } = await supabase.from('buslines').select('*').limit(1);
+      // Use the scraped_data table for health check
+      const { data, error } = await supabase.from('scraped_data').select('count(*)').limit(1);
       healthStatus.supabase = !error;
     } catch (error) {
       console.error('Supabase health check failed:', error);

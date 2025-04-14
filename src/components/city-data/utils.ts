@@ -1,8 +1,8 @@
 
 /**
- * Format a date string to Icelandic format
- * @param dateString The date string to format
- * @returns Formatted date string
+ * Format a date string for display
+ * @param dateString Date string to format
+ * @returns Formatted date string in Icelandic format
  */
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);

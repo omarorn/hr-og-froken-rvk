@@ -1,34 +1,26 @@
 
-import { ScrapedDataRecord } from "@/integrations/supabase/client";
-
-export interface ScrapingResult {
-  success: boolean;
-  data?: {
-    domain: string;
-    pagesScraped: number;
-    data: any[];
-    recordId?: string;
-  };
-  error?: string;
+export interface SmitheryServer {
+  qualifiedName: string;
+  name: string;
+  description: string;
+  version: string;
+  owner: string;
 }
 
 export interface ServerDetails {
   qualifiedName: string;
-  displayName: string;
-  deploymentUrl: string;
-  connections: Array<{
-    type: string;
-    url?: string;
-    configSchema: any;
-  }>;
+  name: string;
+  description: string;
+  version: string;
+  owner: string;
+  connectionInfo: {
+    url: string;
+    apiKey?: string;
+  };
 }
 
-export interface SmitheryServer {
-  qualifiedName: string;
-  displayName: string;
-  description: string;
-  homepage: string;
-  useCount: string;
-  isDeployed: boolean;
-  createdAt: string;
+export interface ScrapingResult {
+  success: boolean;
+  data?: any;
+  error?: string;
 }

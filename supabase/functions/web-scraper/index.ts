@@ -142,7 +142,6 @@ serve(async (req) => {
           url,
           domain: scrapedData.domain,
           pages_scraped: scrapedData.pagesScraped,
-          scraped_at: new Date().toISOString(),
           data: scrapedData.data
         })
         .select();

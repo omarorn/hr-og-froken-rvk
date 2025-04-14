@@ -1,3 +1,4 @@
+
 import { supabase, SUPABASE_URL, SUPABASE_PUBLIC_KEY, ScrapedDataRecord } from "@/integrations/supabase/client";
 
 /**
