@@ -1,22 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import MessageSubtitles from './MessageSubtitles';
+
+import React, { useEffect } from 'react';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 import { useMessageService } from '@/services/messageService';
-import AssistantContainer from './voice/AssistantContainer';
-import Footer from './voice/Footer';
 import MicrophonePermissionDialog from './voice/MicrophonePermissionDialog';
 import { useGreeting } from '@/hooks/useGreeting';
 import { usePermissionDialog } from '@/hooks/usePermissionDialog';
 import { useVoiceAssistantUI } from '@/hooks/useVoiceAssistantUI';
 import { useVoiceMessageHandler } from '@/hooks/useVoiceMessageHandler';
 import { useMCP } from '@/hooks/useMCP';
-import BackgroundContainer from './voice/BackgroundContainer';
-import { Badge } from '@/components/ui/badge';
-import { RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useHealthCheck } from '@/services/healthCheckService';
+import { useAssistantState } from '@/hooks/useAssistantState';
 import { toast } from 'sonner';
+import AssistantWrapper from './voice/AssistantWrapper';
 
 interface VoiceAssistantProps {
   assistantName?: string;
@@ -41,12 +37,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     connectionStatus
   } = messageService;
   
-  const [initialGreetingDone, setInitialGreetingDone] = useState<boolean>(false);
-  const [userHasGreeted, setUserHasGreeted] = useState<boolean>(false);
-
+  const { initialGreetingDone, setInitialGreetingDone, userHasGreeted, setUserHasGreeted } = useAssistantState();
   const { isSpeaking, speakMessage, hasError } = useAudioPlayback();
   const { initialGreeting, isLoading: isGreetingLoading, shouldAutoGreet, hasError: greetingError } = useGreeting(gender);
-  
   const { supabaseMCP, codeMCP, gSuiteMCP } = useMCP();
   
   const {
@@ -87,10 +80,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     hasError: hasError || greetingError || initError
   });
 
-  const handleAudioLevelChange = (level: number) => {
-    setAudioLevel(level);
-  };
-
   const { isListening, hasPermission, initializeVoiceDetection } = useAudioRecording({
     onTranscriptionComplete: (text) => {
       const lowerText = text.toLowerCase();
@@ -121,7 +110,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     },
     onProcessingStateChange: setIsProcessing,
     onTranscriptionError: handleTranscriptionError,
-    onAudioLevelChange: handleAudioLevelChange,
+    onAudioLevelChange: setAudioLevel,
     autoDetectVoice,
     language: 'is'
   });
@@ -169,43 +158,12 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     await resetAssistant();
   };
 
-  const renderAssistantBadge = () => {
-    if (assistantId && threadId) {
-      return (
-        <div className="fixed bottom-2 right-2 z-50">
-          <Badge variant="outline" className="bg-green-50 text-green-800 border-green-300 hover:bg-green-100">
-            OpenAI Assistant API
-          </Badge>
-        </div>
-      );
-    } else if (initError) {
-      return (
-        <div className="fixed bottom-2 right-2 z-50 flex items-center space-x-2">
-          <Badge variant="outline" className="bg-red-50 text-red-800 border-red-300 hover:bg-red-100">
-            Staðbundinn aðstoðarmaður
-          </Badge>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-white/80 border-red-300 text-red-800 hover:bg-red-50"
-            onClick={handleReconnectAttempt}
-          >
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Reyna aftur
-          </Button>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <BackgroundContainer currentScenario={currentScenario}>
-      {renderAssistantBadge()}
-      
-      <AssistantContainer
+    <>
+      <AssistantWrapper
         assistantName={assistantName}
         gender={gender}
+        currentScenario={currentScenario}
         messages={messages}
         isSpeaking={isSpeaking}
         isListening={isListening}
@@ -213,33 +171,27 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         isGreetingLoading={isGreetingLoading}
         autoDetectVoice={autoDetectVoice}
         showVideoChat={showVideoChat}
+        showSubtitles={showSubtitles}
         audioLevel={audioLevel}
         currentTranscribedText={currentTranscribedText}
-        onTranscribedTextChange={handleTranscriptionUpdate}
-        onSendMessage={handleSendMessageWrapper}
-        toggleAutoDetectVoice={toggleAutoDetectVoice}
-        toggleVideoChat={toggleVideoChat}
-        toggleSubtitles={toggleSubtitles}
-        showSubtitles={showSubtitles}
-        currentScenario={currentScenario}
+        activeSubtitleText={activeSubtitleText}
         userHasGreeted={userHasGreeted}
+        assistantId={assistantId}
+        threadId={threadId}
+        initError={initError}
+        inFallbackMode={inFallbackMode}
         mcpStatus={{
           supabase: supabaseMCP.status.connected,
           code: codeMCP.status.connected,
           gSuite: gSuiteMCP.status.connected
         }}
-        hasConnectionError={initError || inFallbackMode}
+        onTranscribedTextChange={handleTranscriptionUpdate}
+        onSendMessage={handleSendMessageWrapper}
+        onReconnectAttempt={handleReconnectAttempt}
+        toggleAutoDetectVoice={toggleAutoDetectVoice}
+        toggleVideoChat={toggleVideoChat}
+        toggleSubtitles={toggleSubtitles}
       />
-      
-      {showSubtitles && (
-        <MessageSubtitles 
-          text={activeSubtitleText} 
-          isActive={isSpeaking && activeSubtitleText !== ""}
-          scenario={currentScenario}
-        />
-      )}
-      
-      <Footer />
 
       <MicrophonePermissionDialog 
         open={showPermissionDialog}
@@ -250,8 +202,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           setAutoDetectVoice(false);
         }}
       />
-    </BackgroundContainer>
+    </>
   );
 };
 
 export default VoiceAssistant;
+
